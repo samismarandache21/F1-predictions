@@ -1,0 +1,7 @@
+# Which f1core.Component implementations are active. Empty in Phase 1 (M1 "Watch"):
+# there are no derived/predicted variables yet, only observed ones flowing straight
+# from ingestion through race state to the API. Later milestones register components
+# here (e.g. TyreDegEstimator, LapTimePredictor, MonteCarloEngine) without touching
+# the orchestrator itself — see docs/f1-strategy-foundation.md §4.5-4.6.
+version: 1
+components: []

@@ -1,0 +1,32 @@
+[project]
+name = "f1api"
+version = "0.1.0"
+description = "FastAPI REST + WebSocket gateway."
+requires-python = ">=3.12"
+dependencies = [
+    "f1core",
+    "f1ingest",
+    "f1state",
+    "f1track",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.31",
+    "websockets>=13.1",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.13",
+    "redis>=5.0",
+    "pydantic-settings>=2.5",
+]
+
+[tool.uv.sources]
+f1core = { workspace = true }
+f1ingest = { workspace = true }
+f1state = { workspace = true }
+f1track = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/f1api"]

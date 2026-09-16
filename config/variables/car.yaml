@@ -1,0 +1,83 @@
+# Per-car and per-car-lap variables. "car_lap" scope means one value per (driver, lap);
+# location fields are grouped here per docs/f1-strategy-foundation.md §4.3 even though
+# they are sampled at ~3.7 Hz within the lap, since they are keyed to a car's current lap.
+- id: car.retired
+  scope: car
+  dtype: bool
+  unit: none
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: []
+  description: Whether the car has retired from the session.
+
+- id: car.location.x_m
+  scope: car_lap
+  dtype: float
+  unit: _m
+  kinds_allowed: [observed, predicted]
+  depends_on: []
+  affects: [car.location.s_m]
+  description: Raw car X position on the circuit-local plane, from location telemetry.
+
+- id: car.location.y_m
+  scope: car_lap
+  dtype: float
+  unit: _m
+  kinds_allowed: [observed, predicted]
+  depends_on: []
+  affects: [car.location.s_m]
+  description: Raw car Y position on the circuit-local plane, from location telemetry.
+
+- id: car.location.s_m
+  scope: car_lap
+  dtype: float
+  unit: _m
+  kinds_allowed: [observed, predicted]
+  depends_on: [car.location.x_m, car.location.y_m]
+  affects: []
+  description: Distance travelled along the circuit polyline, from projecting (x, y) onto the track geometry.
+
+- id: car.lap.time_s
+  scope: car_lap
+  dtype: float
+  unit: _s
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: [car.lap.position, car.lap.gap_to_leader_s, car.lap.interval_s]
+  description: Completed lap time in seconds.
+
+- id: car.lap.position
+  scope: car_lap
+  dtype: int
+  unit: none
+  kinds_allowed: [observed]
+  depends_on: [car.lap.time_s]
+  affects: []
+  description: Running order position (1 = leader) at the end of this lap.
+
+- id: car.lap.gap_to_leader_s
+  scope: car_lap
+  dtype: float
+  unit: _s
+  kinds_allowed: [observed]
+  depends_on: [car.lap.time_s]
+  affects: []
+  description: Race-time gap to the leader.
+
+- id: car.lap.interval_s
+  scope: car_lap
+  dtype: float
+  unit: _s
+  kinds_allowed: [observed]
+  depends_on: [car.lap.time_s]
+  affects: []
+  description: Race-time gap to the car directly ahead.
+
+- id: car.lap.in_pit
+  scope: car_lap
+  dtype: bool
+  unit: none
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: []
+  description: Whether the car is currently in the pit lane.

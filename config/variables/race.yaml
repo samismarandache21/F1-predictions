@@ -1,0 +1,37 @@
+# Race-scope variables. See docs/f1-strategy-foundation.md §4.1 for the schema and
+# §4.2 for kind precedence (overridden > observed > estimated > predicted > prior).
+- id: race.lap
+  scope: race
+  dtype: int
+  unit: laps
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: [race.track_status]
+  description: Current completed lap number for the session.
+
+- id: race.total_laps
+  scope: race
+  dtype: int
+  unit: laps
+  kinds_allowed: [observed, prior]
+  depends_on: []
+  affects: []
+  description: Scheduled total race distance in laps (prior from the circuit config until observed at session start).
+
+- id: race.track_status
+  scope: race
+  dtype: enum
+  unit: none
+  kinds_allowed: [observed]
+  depends_on: [race.lap]
+  affects: [car.lap.time_s, car.pit.lane_time_s]
+  description: "GREEN | YELLOW | SC | VSC | RED, from race control messages."
+
+- id: race.elapsed_time_s
+  scope: race
+  dtype: float
+  unit: s
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: []
+  description: Session-relative elapsed time since lights out (replay clock or live wall time offset).

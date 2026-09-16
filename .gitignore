@@ -1,0 +1,45 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# uv
+.uv-cache/
+
+# Node / Angular
+web/node_modules/
+web/dist/
+web/.angular/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Data (never commit raw session data)
+data/
+!data/.gitkeep
+!data/raw/.gitkeep
+
+# DB
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+
+# Generated
+docs/generated/*.md
+!docs/generated/.gitkeep
+
+# Logs
+*.log

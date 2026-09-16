@@ -1,0 +1,35 @@
+# Fixture circuit for Phase 1 (2025 Italian GP). All numeric fields below are priors
+# (kind: prior) — config, not measurements. Recalibrate from ingested data once T4 runs.
+id: monza
+name: Autodromo Nazionale di Monza
+country: Italy
+type: permanent
+lat: 45.6156
+lon: 9.2811
+length_m: 5793
+laps: 53
+pit_lane_loss_s:
+  value: 24.0
+  sd: 1.5
+  kind: prior
+  note: >
+    Not in the measured 2026 sample (docs/f1-strategy-research.md §4.2 covers Miami,
+    Silverstone, Red Bull Ring, Monaco, Barcelona only). Rough estimate from a long,
+    fast pit lane; recompute from ingested pit_stop rows.
+overtake_difficulty:
+  value: 0.85
+  kind: prior
+  note: >
+    0 = hardest (Monaco), 1 = easiest. Monza is qualitatively one of the easiest
+    circuits to pass on (long straights, low downforce) per
+    docs/f1-strategy-research.md §7.1, but not yet fitted from the `overtake` table.
+sc_hazard_per_lap:
+  value: 0.015
+  kind: prior
+  note: "Placeholder. Recompute per docs/f1-strategy-research.md §5.2 from race-control data."
+deg_class: low
+weather:
+  rain_risk: low
+  forecast_source: open-meteo
+cluster: low_deg
+data_since: 2023

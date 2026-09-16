@@ -1,0 +1,182 @@
+# 2026 season config. Source: docs/f1-driver-circuit-intel.md §1, §3 (snapshot 16 Sep 2026,
+# after round 14). Car numbers and team colours are best-effort placeholders pending
+# verification against the official FIA entry list — see the `note` fields.
+#
+# kind: prior everywhere in this file — these are config values, not observed/estimated data.
+
+season: 2026
+grid_size: 22
+rounds: 23
+overtake_aid: overtake_mode   # DRS does not exist in 2026; see docs/f1-strategy-foundation.md §2
+points_table: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
+fastest_lap_point: false
+min_green_flag_laps_for_points: 2
+
+compound_rules:
+  dry_compounds: [C1, C2, C3, C4, C5]   # C6 dropped for 2026
+  nominated_per_event: 3                # Pirelli picks 3 of 5, labelled Hard/Medium/Soft
+  two_compound_rule: true               # at least 2 different dry compounds in a dry race
+  wet_compounds: [INTERMEDIATE, WET]
+  monaco_mandatory_two_stop: false      # removed for 2026
+
+teams:
+  - id: mercedes
+    name: Mercedes
+    colour: "#27F4D2"
+  - id: ferrari
+    name: Ferrari
+    colour: "#E8002D"
+  - id: mclaren
+    name: McLaren
+    colour: "#FF8000"
+  - id: red_bull
+    name: Red Bull Racing
+    colour: "#3671C6"
+  - id: racing_bulls
+    name: Racing Bulls
+    colour: "#6692FF"
+  - id: alpine
+    name: Alpine
+    colour: "#0093CC"
+  - id: haas
+    name: Haas
+    colour: "#B6BABD"
+  - id: audi
+    name: Audi
+    colour: "#BB0A30"
+  - id: williams
+    name: Williams
+    colour: "#64C4FF"
+  - id: aston_martin
+    name: Aston Martin
+    colour: "#229971"
+  - id: cadillac
+    name: Cadillac
+    colour: "#8A2BE2"
+    note: "New 2026 entrant (11th team). Colour is a placeholder; verify against livery reveal."
+
+# Mid-season change (docs/f1-driver-circuit-intel.md §1, §3): Hadjar injured from round 12;
+# Lawson moves Racing Bulls -> Red Bull; Tsunoda moves reserve -> Racing Bulls.
+# `entries[].rounds` is an inclusive [start, end] round range. Exactly 22 drivers are
+# active in every round; f1core.config.season validates this.
+drivers:
+  - id: antonelli
+    number: 12
+    code: ANT
+    name: Kimi Antonelli
+    entries: [{team: mercedes, rounds: [1, 23]}]
+  - id: russell
+    number: 63
+    code: RUS
+    name: George Russell
+    entries: [{team: mercedes, rounds: [1, 23]}]
+  - id: hamilton
+    number: 44
+    code: HAM
+    name: Lewis Hamilton
+    entries: [{team: ferrari, rounds: [1, 23]}]
+  - id: leclerc
+    number: 16
+    code: LEC
+    name: Charles Leclerc
+    entries: [{team: ferrari, rounds: [1, 23]}]
+  - id: norris
+    number: 4
+    code: NOR
+    name: Lando Norris
+    entries: [{team: mclaren, rounds: [1, 23]}]
+  - id: piastri
+    number: 81
+    code: PIA
+    name: Oscar Piastri
+    entries: [{team: mclaren, rounds: [1, 23]}]
+  - id: verstappen
+    number: 1
+    code: VER
+    name: Max Verstappen
+    entries: [{team: red_bull, rounds: [1, 23]}]
+  - id: hadjar
+    number: 6
+    code: HAD
+    name: Isack Hadjar
+    entries: [{team: red_bull, rounds: [1, 11]}]
+    note: "Injured from round 12; out for the rest of the season per docs."
+  - id: lawson
+    number: 30
+    code: LAW
+    name: Liam Lawson
+    entries:
+      - {team: racing_bulls, rounds: [1, 11]}
+      - {team: red_bull, rounds: [12, 23]}
+  - id: lindblad
+    number: 41
+    code: LIN
+    name: Arvid Lindblad
+    entries: [{team: racing_bulls, rounds: [1, 23]}]
+    note: "Rookie; number is a placeholder pending confirmation."
+  - id: tsunoda
+    number: 22
+    code: TSU
+    name: Yuki Tsunoda
+    entries: [{team: racing_bulls, rounds: [12, 23]}]
+    note: "Reserve driver until round 12; not entered rounds 1-11."
+  - id: gasly
+    number: 10
+    code: GAS
+    name: Pierre Gasly
+    entries: [{team: alpine, rounds: [1, 23]}]
+  - id: colapinto
+    number: 43
+    code: COL
+    name: Franco Colapinto
+    entries: [{team: alpine, rounds: [1, 23]}]
+  - id: bearman
+    number: 87
+    code: BEA
+    name: Oliver Bearman
+    entries: [{team: haas, rounds: [1, 23]}]
+  - id: ocon
+    number: 31
+    code: OCO
+    name: Esteban Ocon
+    entries: [{team: haas, rounds: [1, 23]}]
+  - id: bortoleto
+    number: 5
+    code: BOR
+    name: Gabriel Bortoleto
+    entries: [{team: audi, rounds: [1, 23]}]
+  - id: hulkenberg
+    number: 27
+    code: HUL
+    name: Nico Hülkenberg
+    entries: [{team: audi, rounds: [1, 23]}]
+  - id: sainz
+    number: 55
+    code: SAI
+    name: Carlos Sainz
+    entries: [{team: williams, rounds: [1, 23]}]
+  - id: albon
+    number: 23
+    code: ALB
+    name: Alex Albon
+    entries: [{team: williams, rounds: [1, 23]}]
+  - id: alonso
+    number: 14
+    code: ALO
+    name: Fernando Alonso
+    entries: [{team: aston_martin, rounds: [1, 23]}]
+  - id: stroll
+    number: 18
+    code: STR
+    name: Lance Stroll
+    entries: [{team: aston_martin, rounds: [1, 23]}]
+  - id: bottas
+    number: 77
+    code: BOT
+    name: Valtteri Bottas
+    entries: [{team: cadillac, rounds: [1, 23]}]
+  - id: perez
+    number: 11
+    code: PER
+    name: Sergio Pérez
+    entries: [{team: cadillac, rounds: [1, 23]}]

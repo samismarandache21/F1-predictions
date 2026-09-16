@@ -1,0 +1,37 @@
+# Weather-scope variables (race-wide, observed from OpenF1 weather samples in M1).
+# Forecast (D6) and rain modelling (P8) are M5 — not implemented here.
+- id: weather.track_temp_c
+  scope: race
+  dtype: float
+  unit: _c
+  kinds_allowed: [observed, prior]
+  depends_on: []
+  affects: []
+  description: Track surface temperature in Celsius.
+
+- id: weather.air_temp_c
+  scope: race
+  dtype: float
+  unit: _c
+  kinds_allowed: [observed, prior]
+  depends_on: []
+  affects: []
+  description: Ambient air temperature in Celsius.
+
+- id: weather.humidity_pct
+  scope: race
+  dtype: float
+  unit: pct
+  kinds_allowed: [observed, prior]
+  depends_on: []
+  affects: []
+  description: Relative humidity, 0-100.
+
+- id: weather.rainfall
+  scope: race
+  dtype: bool
+  unit: none
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: []
+  description: Whether rain is currently falling at the circuit.

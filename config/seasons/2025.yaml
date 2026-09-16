@@ -1,0 +1,167 @@
+# 2025 season config, used for the Phase 1 fixture race (Italian GP, Monza).
+# 10 teams, 20 cars — the last season before the 2026 Cadillac expansion.
+# Round numbers for mid-season swaps are best-effort recollection and MUST be
+# verified against Jolpica during ingestion (T4); update the `rounds` ranges below
+# once confirmed rather than trusting this file blindly.
+
+season: 2025
+grid_size: 20
+rounds: 24
+overtake_aid: drs   # last season with DRS
+points_table: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
+fastest_lap_point: false
+min_green_flag_laps_for_points: 2
+
+compound_rules:
+  dry_compounds: [C1, C2, C3, C4, C5, C6]
+  nominated_per_event: 3
+  two_compound_rule: true
+  wet_compounds: [INTERMEDIATE, WET]
+  monaco_mandatory_two_stop: true   # 2025-only rule, removed for 2026
+
+teams:
+  - id: red_bull
+    name: Red Bull Racing
+    colour: "#3671C6"
+  - id: mclaren
+    name: McLaren
+    colour: "#FF8000"
+  - id: ferrari
+    name: Ferrari
+    colour: "#E8002D"
+  - id: mercedes
+    name: Mercedes
+    colour: "#27F4D2"
+  - id: aston_martin
+    name: Aston Martin
+    colour: "#229971"
+  - id: alpine
+    name: Alpine
+    colour: "#0093CC"
+  - id: williams
+    name: Williams
+    colour: "#64C4FF"
+  - id: racing_bulls
+    name: Racing Bulls
+    colour: "#6692FF"
+  - id: haas
+    name: Haas
+    colour: "#B6BABD"
+  - id: kick_sauber
+    name: Kick Sauber
+    colour: "#52E252"
+
+drivers:
+  - id: verstappen
+    number: 1
+    code: VER
+    name: Max Verstappen
+    entries: [{team: red_bull, rounds: [1, 24]}]
+  - id: lawson
+    number: 30
+    code: LAW
+    name: Liam Lawson
+    entries:
+      - {team: red_bull, rounds: [1, 2]}
+      - {team: racing_bulls, rounds: [3, 24]}
+    note: "Demoted after round 2; verify exact round against Jolpica."
+  - id: tsunoda
+    number: 22
+    code: TSU
+    name: Yuki Tsunoda
+    entries:
+      - {team: racing_bulls, rounds: [1, 2]}
+      - {team: red_bull, rounds: [3, 24]}
+    note: "Promoted after round 2; verify exact round against Jolpica."
+  - id: hadjar
+    number: 6
+    code: HAD
+    name: Isack Hadjar
+    entries: [{team: racing_bulls, rounds: [1, 24]}]
+  - id: norris
+    number: 4
+    code: NOR
+    name: Lando Norris
+    entries: [{team: mclaren, rounds: [1, 24]}]
+  - id: piastri
+    number: 81
+    code: PIA
+    name: Oscar Piastri
+    entries: [{team: mclaren, rounds: [1, 24]}]
+  - id: leclerc
+    number: 16
+    code: LEC
+    name: Charles Leclerc
+    entries: [{team: ferrari, rounds: [1, 24]}]
+  - id: hamilton
+    number: 44
+    code: HAM
+    name: Lewis Hamilton
+    entries: [{team: ferrari, rounds: [1, 24]}]
+  - id: russell
+    number: 63
+    code: RUS
+    name: George Russell
+    entries: [{team: mercedes, rounds: [1, 24]}]
+  - id: antonelli
+    number: 12
+    code: ANT
+    name: Kimi Antonelli
+    entries: [{team: mercedes, rounds: [1, 24]}]
+  - id: alonso
+    number: 14
+    code: ALO
+    name: Fernando Alonso
+    entries: [{team: aston_martin, rounds: [1, 24]}]
+  - id: stroll
+    number: 18
+    code: STR
+    name: Lance Stroll
+    entries: [{team: aston_martin, rounds: [1, 24]}]
+  - id: gasly
+    number: 10
+    code: GAS
+    name: Pierre Gasly
+    entries: [{team: alpine, rounds: [1, 24]}]
+  - id: doohan
+    number: 61
+    code: DOO
+    name: Jack Doohan
+    entries: [{team: alpine, rounds: [1, 5]}]
+    note: "Replaced by Colapinto; verify exact round against Jolpica."
+  - id: colapinto
+    number: 43
+    code: COL
+    name: Franco Colapinto
+    entries: [{team: alpine, rounds: [6, 24]}]
+    note: "Verify exact round against Jolpica."
+  - id: albon
+    number: 23
+    code: ALB
+    name: Alex Albon
+    entries: [{team: williams, rounds: [1, 24]}]
+  - id: sainz
+    number: 55
+    code: SAI
+    name: Carlos Sainz
+    entries: [{team: williams, rounds: [1, 24]}]
+  - id: bearman
+    number: 87
+    code: BEA
+    name: Oliver Bearman
+    entries: [{team: haas, rounds: [1, 24]}]
+  - id: ocon
+    number: 31
+    code: OCO
+    name: Esteban Ocon
+    entries: [{team: haas, rounds: [1, 24]}]
+  - id: hulkenberg
+    number: 27
+    code: HUL
+    name: Nico Hülkenberg
+    entries: [{team: kick_sauber, rounds: [1, 24]}]
+  - id: bortoleto
+    number: 5
+    code: BOR
+    name: Gabriel Bortoleto
+    entries: [{team: kick_sauber, rounds: [1, 24]}]

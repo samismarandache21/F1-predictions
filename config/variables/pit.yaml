@@ -1,0 +1,27 @@
+# Pit stop variables, observed only in M1. Prediction (P4-P5) is M3.
+- id: car.pit.lane_time_s
+  scope: car_lap
+  dtype: float
+  unit: _s
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: []
+  description: Total time spent in the pit lane for a stop completed on this lap.
+
+- id: car.pit.stationary_time_s
+  scope: car_lap
+  dtype: float
+  unit: _s
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: []
+  description: Stationary time (wheels off to wheels on), where available from the data source.
+
+- id: car.pit.stop_count
+  scope: car
+  dtype: int
+  unit: none
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: []
+  description: Number of pit stops completed so far this race.

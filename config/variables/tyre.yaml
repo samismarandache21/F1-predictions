@@ -1,0 +1,28 @@
+# Tyre and stint variables. Degradation fitting (P1) is M2 — not implemented here;
+# M1 only tracks what is directly observed (compound, age, stint number).
+- id: car.tyre.compound
+  scope: car_stint
+  dtype: enum
+  unit: none
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: []
+  description: "Current tyre compound: SOFT | MEDIUM | HARD | INTERMEDIATE | WET."
+
+- id: car.tyre.age_laps
+  scope: car_stint
+  dtype: int
+  unit: laps
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: []
+  description: Laps completed on the current tyre set.
+
+- id: car.stint.number
+  scope: car_stint
+  dtype: int
+  unit: none
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: []
+  description: 1-indexed stint number within the race.

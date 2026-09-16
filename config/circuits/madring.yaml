@@ -1,0 +1,32 @@
+# Fixture circuit for Phase 1 (2026 Spanish GP, Madring). Cold-start circuit per
+# docs/f1-driver-circuit-intel.md §2/§9: no modern-era history, only its own 2026
+# session. Geometry is built from that single session's location samples (T7), not
+# from this file. Numeric priors below are left null on purpose — CLAUDE.md rule 7
+# ("degrade gracefully") means components must fall back to a wide-uncertainty prior
+# rather than a fabricated number when a field is null.
+id: madring
+name: Circuito de Madrid (Madring)
+country: Spain
+type: hybrid   # street/permanent hybrid layout per docs/f1-driver-circuit-intel.md §2
+lat: 40.4168
+lon: -3.7038
+length_m: null
+laps: null
+pit_lane_loss_s:
+  value: null
+  kind: prior
+  note: "Cold start (first race 2026). Estimate directly from the ingested session; no history to prior from."
+overtake_difficulty:
+  value: null
+  kind: prior
+  note: "Cold start. Use the street/hybrid circuit-type prior until session data exists."
+sc_hazard_per_lap:
+  value: null
+  kind: prior
+  note: "Cold start. Use the street-circuit class prior (historically higher than permanent circuits)."
+deg_class: unknown
+weather:
+  rain_risk: unknown
+  forecast_source: open-meteo
+cluster: cold_start
+data_since: 2026
