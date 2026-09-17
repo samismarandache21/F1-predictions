@@ -8,15 +8,19 @@ import os
 from pathlib import Path
 
 import click
+import redis
 
 from f1ingest.adapters.jolpica import BASE_URL as JOLPICA_BASE_URL
 from f1ingest.adapters.jolpica import JolpicaAdapter
 from f1ingest.adapters.openf1_hist import BASE_URL as OPENF1_BASE_URL
 from f1ingest.adapters.openf1_hist import OpenF1HistoricalAdapter
+from f1ingest.adapters.replay import DbRowSource, ReplayAdapter
 from f1ingest.cache import RawResponseCache
+from f1ingest.clock import MAX_SPEED, MIN_SPEED
 from f1ingest.db.engine import get_engine
 from f1ingest.http import RateLimitedClient, RateLimiter
 from f1ingest.pipeline import ingest_session
+from f1ingest.publisher import RedisStreamPublisher
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -113,10 +117,18 @@ def ingest_season_cmd(season: int) -> None:
 @click.option("--session", "session_key", required=True, type=int)
 @click.option("--speed", default=1.0, type=float)
 def replay(session_key: int, speed: float) -> None:
-    """Replay a stored session at the given speed (T5 — not yet built)."""
-    raise click.ClickException(
-        "replay is built in T5 (docs/plan/phase-1.md); T4 only covers ingestion into the DB."
-    )
+    """Replay a stored session at the given speed, publishing to Redis Streams."""
+    if not (MIN_SPEED <= speed <= MAX_SPEED):
+        raise click.BadParameter(f"--speed must be within [{MIN_SPEED}, {MAX_SPEED}]")
+
+    engine = get_engine()
+    redis_client = redis.Redis.from_url(os.environ.get("REDIS_URL", "redis://localhost:6379/0"))
+    publisher = RedisStreamPublisher(redis_client, stream_prefix=f"replay:{session_key}")
+    adapter = ReplayAdapter(DbRowSource(engine), publisher, speed=speed)
+
+    logger.info("replaying session_key=%s at %sx", session_key, speed)
+    count = sum(1 for _ in adapter.stream(session_key))
+    logger.info("replay finished: %s events published", count)
 
 
 if __name__ == "__main__":
