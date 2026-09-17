@@ -53,6 +53,4 @@ def load_circuit(path: Path) -> CircuitConfig:
 
 
 def load_all_circuits(directory: Path) -> dict[str, CircuitConfig]:
-    return {
-        (cfg := load_circuit(path)).id: cfg for path in sorted(directory.glob("*.yaml"))
-    }
+    return {(cfg := load_circuit(path)).id: cfg for path in sorted(directory.glob("*.yaml"))}

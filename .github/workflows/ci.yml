@@ -13,6 +13,23 @@ env:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    # Timescale/Postgres is local-to-CI infrastructure, not an external network
+    # call — DB-touching tests (schema, idempotent upsert) run against it here.
+    # Tests marked `network` (live OpenF1/Jolpica/Open-Meteo calls) are excluded.
+    services:
+      db:
+        image: timescale/timescaledb:2.17.2-pg16
+        env:
+          POSTGRES_DB: f1strategy_test
+          POSTGRES_USER: f1strategy
+          POSTGRES_PASSWORD: f1strategy
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U f1strategy -d f1strategy_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -40,11 +57,17 @@ jobs:
         working-directory: backend
         run: uv run mypy --strict f1core/src/f1core
 
+      - name: Apply migrations
+        working-directory: backend
+        run: uv run alembic -c f1api/alembic.ini upgrade head
+        env:
+          DATABASE_URL: postgresql+psycopg://f1strategy:f1strategy@localhost:5432/f1strategy_test
+
       - name: pytest
         working-directory: backend
-        run: uv run pytest ../tests -q
+        run: uv run pytest ../tests -q -m "not network"
         env:
-          F1_NO_NETWORK: "1"
+          DATABASE_URL: postgresql+psycopg://f1strategy:f1strategy@localhost:5432/f1strategy_test
 
   frontend:
     runs-on: ubuntu-latest

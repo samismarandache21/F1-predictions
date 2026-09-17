@@ -18,9 +18,7 @@ class DuplicateVariableError(F1CoreError):
 class UnknownVariableError(F1CoreError):
     def __init__(self, unknown_ids: list[str]) -> None:
         self.unknown_ids = unknown_ids
-        super().__init__(
-            f"depends_on/affects reference undefined variable ids: {unknown_ids}"
-        )
+        super().__init__(f"depends_on/affects reference undefined variable ids: {unknown_ids}")
 
 
 class UnknownValueKindError(F1CoreError):
@@ -28,14 +26,10 @@ class UnknownValueKindError(F1CoreError):
         self.var_id = var_id
         self.kind = kind
         self.allowed = allowed
-        super().__init__(
-            f"variable {var_id!r} does not allow kind {kind!r} (allowed: {allowed})"
-        )
+        super().__init__(f"variable {var_id!r} does not allow kind {kind!r} (allowed: {allowed})")
 
 
 class CycleError(F1CoreError):
     def __init__(self, remaining: list[str]) -> None:
         self.remaining = remaining
-        super().__init__(
-            f"dependency cycle detected within a single lap among: {remaining}"
-        )
+        super().__init__(f"dependency cycle detected within a single lap among: {remaining}")

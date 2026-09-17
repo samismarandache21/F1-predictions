@@ -1,6 +1,9 @@
 # 2026 season config. Source: docs/f1-driver-circuit-intel.md §1, §3 (snapshot 16 Sep 2026,
-# after round 14). Car numbers and team colours are best-effort placeholders pending
-# verification against the official FIA entry list — see the `note` fields.
+# after round 14). Car numbers and team colours were cross-checked against live Jolpica
+# (results) and OpenF1 (drivers) data on 2026-09-17 during T4 and corrected where wrong —
+# see docs/plan/phase-1.md T4's validation requirement. One real error was caught this way:
+# Norris carries #1 as 2025 champion, Verstappen reverted to #3 (this file previously had
+# them the other way around).
 #
 # kind: prior everywhere in this file — these are config values, not observed/estimated data.
 
@@ -19,41 +22,43 @@ compound_rules:
   wet_compounds: [INTERMEDIATE, WET]
   monaco_mandatory_two_stop: false      # removed for 2026
 
+# Colours are verified real values from OpenF1 `drivers[].team_colour` (session_key=11369,
+# the actual 2026 Spanish GP at Madring), fetched 2026-09-17.
 teams:
   - id: mercedes
     name: Mercedes
-    colour: "#27F4D2"
+    colour: "#00D7B6"
   - id: ferrari
     name: Ferrari
-    colour: "#E8002D"
+    colour: "#ED1131"
   - id: mclaren
     name: McLaren
-    colour: "#FF8000"
+    colour: "#F47600"
   - id: red_bull
     name: Red Bull Racing
-    colour: "#3671C6"
+    colour: "#4781D7"
   - id: racing_bulls
     name: Racing Bulls
-    colour: "#6692FF"
+    colour: "#6C98FF"
   - id: alpine
     name: Alpine
-    colour: "#0093CC"
+    colour: "#00A1E8"
   - id: haas
     name: Haas
-    colour: "#B6BABD"
+    colour: "#9C9FA2"
   - id: audi
     name: Audi
-    colour: "#BB0A30"
+    colour: "#F50537"
   - id: williams
     name: Williams
-    colour: "#64C4FF"
+    colour: "#1868DB"
   - id: aston_martin
     name: Aston Martin
     colour: "#229971"
   - id: cadillac
     name: Cadillac
-    colour: "#8A2BE2"
-    note: "New 2026 entrant (11th team). Colour is a placeholder; verify against livery reveal."
+    colour: "#909090"
+    note: "New 2026 entrant (11th team)."
 
 # Mid-season change (docs/f1-driver-circuit-intel.md §1, §3): Hadjar injured from round 12;
 # Lawson moves Racing Bulls -> Red Bull; Tsunoda moves reserve -> Racing Bulls.
@@ -81,20 +86,22 @@ drivers:
     name: Charles Leclerc
     entries: [{team: ferrari, rounds: [1, 23]}]
   - id: norris
-    number: 4
+    number: 1
     code: NOR
     name: Lando Norris
     entries: [{team: mclaren, rounds: [1, 23]}]
+    note: "Carries #1 as 2025 champion (docs/f1-driver-circuit-intel.md §3); verified against Jolpica round 14 results."
   - id: piastri
     number: 81
     code: PIA
     name: Oscar Piastri
     entries: [{team: mclaren, rounds: [1, 23]}]
   - id: verstappen
-    number: 1
+    number: 3
     code: VER
     name: Max Verstappen
     entries: [{team: red_bull, rounds: [1, 23]}]
+    note: "Reverted to permanent #3 once Norris took #1; verified against Jolpica round 14 results."
   - id: hadjar
     number: 6
     code: HAD
@@ -113,7 +120,7 @@ drivers:
     code: LIN
     name: Arvid Lindblad
     entries: [{team: racing_bulls, rounds: [1, 23]}]
-    note: "Rookie; number is a placeholder pending confirmation."
+    note: "Rookie. Number verified against Jolpica round 14 results."
   - id: tsunoda
     number: 22
     code: TSU

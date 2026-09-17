@@ -13,3 +13,8 @@ def repo_root() -> Path:
 @pytest.fixture(scope="session")
 def config_dir(repo_root: Path) -> Path:
     return repo_root / "config"
+
+
+@pytest.fixture(scope="session")
+def fixtures_dir(repo_root: Path) -> Path:
+    return repo_root / "tests" / "fixtures"

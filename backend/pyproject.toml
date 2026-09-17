@@ -35,3 +35,6 @@ warn_unused_configs = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 addopts = "--import-mode=importlib"
+markers = [
+    "network: hits a live external API (OpenF1/Jolpica/Open-Meteo); excluded from CI",
+]

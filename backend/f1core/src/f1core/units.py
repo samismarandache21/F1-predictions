@@ -6,10 +6,10 @@ against a known set rather than being a free-form typo-prone string.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class Unit(str, Enum):
+class Unit(StrEnum):
     SECONDS = "_s"
     METRES = "_m"
     CELSIUS = "_c"

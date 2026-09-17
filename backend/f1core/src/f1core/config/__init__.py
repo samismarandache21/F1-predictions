@@ -1,4 +1,10 @@
-from f1core.config.circuit import CircuitConfig, ValuePrior, WeatherPrior, load_all_circuits, load_circuit
+from f1core.config.circuit import (
+    CircuitConfig,
+    ValuePrior,
+    WeatherPrior,
+    load_all_circuits,
+    load_circuit,
+)
 from f1core.config.season import (
     CompoundRules,
     DriverConfig,

@@ -8,7 +8,7 @@ See docs/f1-strategy-foundation.md §4.1 and docs/plan/phase-1.md T3.
 from __future__ import annotations
 
 from collections.abc import Iterator
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +19,7 @@ from f1core.exceptions import DuplicateVariableError, UnknownVariableError
 from f1core.values import Kind
 
 
-class Scope(str, Enum):
+class Scope(StrEnum):
     RACE = "race"
     LAP = "lap"
     CAR = "car"

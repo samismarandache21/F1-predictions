@@ -1,0 +1,62 @@
+[
+  {
+    "date": "2025-09-07T12:06:03.272000+00:00",
+    "session_key": 9912,
+    "meeting_key": 1268,
+    "air_temperature": 26.0,
+    "pressure": 997.5,
+    "track_temperature": 43.5,
+    "wind_direction": 263,
+    "wind_speed": 2.5,
+    "humidity": 44.0,
+    "rainfall": 0
+  },
+  {
+    "date": "2025-09-07T12:07:03.241000+00:00",
+    "session_key": 9912,
+    "meeting_key": 1268,
+    "air_temperature": 26.1,
+    "pressure": 997.4,
+    "track_temperature": 43.6,
+    "wind_direction": 246,
+    "wind_speed": 1.6,
+    "humidity": 44.0,
+    "rainfall": 0
+  },
+  {
+    "date": "2025-09-07T12:08:03.257000+00:00",
+    "session_key": 9912,
+    "meeting_key": 1268,
+    "air_temperature": 26.1,
+    "pressure": 997.3,
+    "track_temperature": 43.7,
+    "wind_direction": 210,
+    "wind_speed": 1.5,
+    "humidity": 45.0,
+    "rainfall": 0
+  },
+  {
+    "date": "2025-09-07T12:09:03.257000+00:00",
+    "session_key": 9912,
+    "meeting_key": 1268,
+    "air_temperature": 26.1,
+    "pressure": 997.4,
+    "track_temperature": 43.7,
+    "wind_direction": 202,
+    "wind_speed": 1.5,
+    "humidity": 45.0,
+    "rainfall": 0
+  },
+  {
+    "date": "2025-09-07T12:10:03.267000+00:00",
+    "session_key": 9912,
+    "meeting_key": 1268,
+    "air_temperature": 26.0,
+    "pressure": 997.4,
+    "track_temperature": 43.7,
+    "wind_direction": 182,
+    "wind_speed": 1.7,
+    "humidity": 43.0,
+    "rainfall": 0
+  }
+]

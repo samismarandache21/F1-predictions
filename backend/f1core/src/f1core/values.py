@@ -6,13 +6,13 @@ Precedence: overridden > observed > estimated > predicted > prior.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
 
-class Kind(str, Enum):
+class Kind(StrEnum):
     OVERRIDDEN = "overridden"
     OBSERVED = "observed"
     ESTIMATED = "estimated"
