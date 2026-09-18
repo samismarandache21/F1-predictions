@@ -23,9 +23,20 @@ from dataclasses import dataclass, field, replace
 
 
 @dataclass(frozen=True)
+class PitStopRecord:
+    """One completed stop. T9's pit panel needs the actual history (lap,
+    lane time, stationary time), not just a count."""
+
+    lap: int
+    lane_time_s: float | None
+    stationary_time_s: float | None
+
+
+@dataclass(frozen=True)
 class CarState:
     driver: int
     team: str | None = None
+    team_colour: str | None = None
     position: int | None = None
     gap_to_leader_s: float | None = None
     interval_s: float | None = None
@@ -34,6 +45,7 @@ class CarState:
     stint_number: int = 1
     compounds_used: tuple[str, ...] = ()
     pit_stops: int = 0
+    pit_history: tuple[PitStopRecord, ...] = ()
     in_pit: bool = False
     retired: bool = False
     last_lap: int | None = None

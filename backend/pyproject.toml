@@ -28,6 +28,24 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's documented, canonical dependency-injection pattern is
+# `param: T = Depends(...)` — these are recognised sentinels FastAPI
+# re-evaluates per request, not the shared-mutable-default footgun B008
+# otherwise (rightly) warns about.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body"]
+
+[tool.ruff.lint.per-file-ignores]
+# f1api deliberately uses typing.Optional/Union instead of the `X | None`
+# shorthand throughout: the shorthand needs Python 3.10+ to resolve at
+# class-creation time (Pydantic evaluates field annotations eagerly), while
+# Optional/Union have always worked the same regardless of version. This is
+# what keeps f1api's schemas and endpoints testable ahead of the project's
+# real 3.12 toolchain being installed — see f1api/schemas.py's docstring
+# and the T8 summary. Revisit once the toolchain lands; there's no reason
+# to keep this once local dev runs real 3.12.
+"f1api/**/*.py" = ["UP045", "UP007"]
+
 [tool.mypy]
 python_version = "3.12"
 warn_unused_configs = true

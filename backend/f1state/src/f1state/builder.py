@@ -17,7 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Union
 
-from f1state.state import RaceState
+from f1state.state import PitStopRecord, RaceState
 
 if TYPE_CHECKING:
     from f1core.events import DomainEvent
@@ -69,8 +69,13 @@ def _interpret_race_control(
 
 
 class RaceStateBuilder:
-    def __init__(self, team_by_driver_number: dict[int, str] | None = None) -> None:
+    def __init__(
+        self,
+        team_by_driver_number: dict[int, str] | None = None,
+        team_colour_by_driver_number: dict[int, str] | None = None,
+    ) -> None:
         self._team_by_driver_number = team_by_driver_number or {}
+        self._team_colour_by_driver_number = team_colour_by_driver_number or {}
 
     def apply(self, state: RaceState, event: DomainEvent) -> tuple[RaceState, list[Trigger]]:
         handler = getattr(self, f"_apply_{event.type}", None)
@@ -92,6 +97,7 @@ class RaceStateBuilder:
         new_car = replace(
             car,
             team=car.team or self._team_by_driver_number.get(event.driver),
+            team_colour=car.team_colour or self._team_colour_by_driver_number.get(event.driver),
             position=event.position,
             gap_to_leader_s=event.gap_to_leader_s,
             interval_s=event.interval_s,
@@ -113,8 +119,17 @@ class RaceStateBuilder:
         self, state: RaceState, event: DomainEvent
     ) -> tuple[RaceState, list[Trigger]]:
         car = state.car(event.driver)
+        record = PitStopRecord(
+            lap=event.lap,
+            lane_time_s=event.pit_lane_time_s,
+            stationary_time_s=event.stationary_time_s,
+        )
         new_car = replace(
-            car, in_pit=True, pit_stops=car.pit_stops + 1, stint_number=car.stint_number + 1
+            car,
+            in_pit=True,
+            pit_stops=car.pit_stops + 1,
+            pit_history=(*car.pit_history, record),
+            stint_number=car.stint_number + 1,
         )
         return state.with_car(new_car), []
 

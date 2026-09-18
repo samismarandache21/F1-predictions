@@ -196,7 +196,18 @@ class ReplayAdapter:
     def load_events(self, session_key: int) -> list[DomainEvent]:
         return build_event_sequence(session_key, self._rows)
 
-    def stream(self, session_key: int) -> Iterator[DomainEvent]:
+    def prepare(self, session_key: int) -> ReplayClock:
+        """Build the event sequence and clock synchronously, without
+        starting playback. Split out from `stream()` so a caller (T8) can
+        hand back a live_id with a controllable clock attached immediately,
+        before handing the actual iteration off to a background thread —
+        generator functions don't run any of their body, including setting
+        `self.clock`, until first iterated.
+        """
         events = self.load_events(session_key)
         self.clock = ReplayClock(events, self._publisher, speed=self._initial_speed)
-        yield from self.clock.run()
+        return self.clock
+
+    def stream(self, session_key: int) -> Iterator[DomainEvent]:
+        clock = self.clock or self.prepare(session_key)
+        yield from clock.run()

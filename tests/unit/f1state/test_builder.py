@@ -32,6 +32,8 @@ class _FakeLap:
 class _FakePit:
     driver: int
     lap: int
+    pit_lane_time_s: float | None = 22.5
+    stationary_time_s: float | None = 2.4
     type: str = "pit_stop"
 
 
@@ -122,12 +124,28 @@ def test_duplicate_lap_event_is_an_idempotent_no_op() -> None:
 
 def test_pit_stop_sets_in_pit_and_increments_counters() -> None:
     builder = RaceStateBuilder()
-    state, _ = builder.apply(_state(), _FakePit(driver=1, lap=9))
+    state, _ = builder.apply(
+        _state(), _FakePit(driver=1, lap=9, pit_lane_time_s=24.156, stationary_time_s=2.2)
+    )
 
     car = state.car(1)
     assert car.in_pit is True
     assert car.pit_stops == 1
     assert car.stint_number == 2
+    assert len(car.pit_history) == 1
+    assert car.pit_history[0].lap == 9
+    assert car.pit_history[0].lane_time_s == 24.156
+    assert car.pit_history[0].stationary_time_s == 2.2
+
+
+def test_pit_history_accumulates_across_multiple_stops() -> None:
+    builder = RaceStateBuilder()
+    state, _ = builder.apply(_state(), _FakePit(driver=1, lap=9))
+    state, _ = builder.apply(state, _FakePit(driver=1, lap=30))
+
+    car = state.car(1)
+    assert [record.lap for record in car.pit_history] == [9, 30]
+    assert car.pit_stops == 2
 
 
 def test_completing_the_out_lap_clears_in_pit() -> None:
