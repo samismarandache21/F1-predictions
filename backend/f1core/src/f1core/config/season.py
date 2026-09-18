@@ -103,6 +103,17 @@ class SeasonConfig(BaseModel):
             if (team := driver.team_for_round(round_no)) is not None
         }
 
+    def team_by_driver_number(self, round_no: int) -> dict[int, str]:
+        """car number -> team_id for the given round. Team affiliation is
+        config (prior), not something that needs to flow through the domain
+        event stream — f1state's RaceStateBuilder (T6) uses this directly
+        rather than needing a dedicated roster event type."""
+        return {
+            driver.number: team
+            for driver in self.drivers
+            if (team := driver.team_for_round(round_no)) is not None
+        }
+
     def team(self, team_id: str) -> TeamConfig:
         for team in self.teams:
             if team.id == team_id:
