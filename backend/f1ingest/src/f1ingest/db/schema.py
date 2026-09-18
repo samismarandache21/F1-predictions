@@ -1,11 +1,12 @@
 """SQLAlchemy Core schema for the raw ingested data store.
 
-Scope: only the tables Phase 1 (M1 "Watch") needs per docs/plan/phase-1.md T4 —
+Scope: only the tables Phase 1 (M1 "Watch") needs per docs/plan/phase-1.md T4/T7 —
 sessions, driver entries, laps, stints, pit stops, race control, weather, car
-locations, results, plus the ingest log and a quarantine table for bad rows
-(CLAUDE.md rule 7). Tables that belong to later milestones (`overtake`,
-`model_artifact`, `strategy_report` from docs/f1-strategy-design.md §9) are
-deliberately not created here — see docs/backlog.md.
+locations, results, circuit geometry (built by f1track), plus the ingest log
+and a quarantine table for bad rows (CLAUDE.md rule 7). Tables that belong to
+later milestones (`overtake`, `model_artifact`, `strategy_report` from
+docs/f1-strategy-design.md §9) are deliberately not created here — see
+docs/backlog.md.
 
 `laps`, `weather` and `location` become TimescaleDB hypertables in the initial
 migration, partitioned on `ts`. TimescaleDB requires the partitioning column
@@ -224,6 +225,28 @@ ingest_quarantine = Table(
     Column("raw_payload", JSONB, nullable=False),
     Column("reason", Text, nullable=False),
     Column("ingested_at", DateTime(timezone=True), server_default=func.now(), nullable=False),
+)
+
+# Built by f1track (T7) from one clean lap's location samples; stored here
+# because f1ingest owns the data store schema (T4), not because ingestion
+# computes it. Versioned so a circuit's geometry can be rebuilt (e.g. from a
+# cleaner lap, or a better session) without losing the previous version.
+circuit_geometry = Table(
+    "circuit_geometry",
+    metadata,
+    Column("circuit_id", Text, nullable=False),
+    Column("version", Integer, nullable=False),
+    Column("built_from_session_key", BigInteger, nullable=True),
+    Column("length_m", Float, nullable=False),
+    # JSON rather than a Postgres ARRAY column: geometry is always read/
+    # written whole (never queried by index in SQL), so there's no benefit
+    # to a native array type, and JSON keeps this portable.
+    Column("points_json", Text, nullable=False),  # {"x": [...], "y": [...], "s": [...]}
+    Column("sector_boundaries_s_json", Text, nullable=False),  # [s1_end, s2_end]
+    Column("rotation_deg", Float, nullable=False),
+    Column("pit_lane_json", Text, nullable=True),  # {"x": [...], "y": [...], "s": [...]} | null
+    Column("created_at", DateTime(timezone=True), server_default=func.now(), nullable=False),
+    PrimaryKeyConstraint("circuit_id", "version"),
 )
 
 # Converted to TimescaleDB hypertables (partitioned on `ts`) in the initial

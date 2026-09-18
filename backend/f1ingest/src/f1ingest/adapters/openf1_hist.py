@@ -304,9 +304,15 @@ class OpenF1HistoricalAdapter:
                         "session_key": session_key,
                         "driver_number": driver_number,
                         "ts": _parse_ts(loc["date"]),
-                        "x_m": loc["x"],
-                        "y_m": loc["y"],
-                        "z_m": loc.get("z"),
+                        # OpenF1's raw x/y/z are in decimetres, not metres: a
+                        # full Monza lap's raw path length comes out to
+                        # ~5850-5950 raw units, matching Monza's real 5793 m
+                        # length only once divided by 10 (checked live
+                        # during T7). Convert here so the x_m/y_m/z_m column
+                        # names are honest (CLAUDE.md rule 5: units explicit).
+                        "x_m": loc["x"] / 10.0,
+                        "y_m": loc["y"] / 10.0,
+                        "z_m": loc["z"] / 10.0 if loc.get("z") is not None else None,
                         "source": SOURCE,
                     },
                 )

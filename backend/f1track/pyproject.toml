@@ -4,14 +4,14 @@ version = "0.1.0"
 description = "Circuit geometry builder: polyline from location samples, projection, speed profiles."
 requires-python = ">=3.12"
 dependencies = [
-    "f1core",
     "numpy>=2.0",
     "scipy>=1.14",
-    "pydantic>=2.9",
 ]
 
-[tool.uv.sources]
-f1core = { workspace = true }
+# Deliberately no f1core/pydantic dependency: this package is pure
+# numerical code (numpy + scipy), independently testable without pulling
+# in f1core's Pydantic-based package init — see f1track.geometry's module
+# docstring and the T7 summary.
 
 [build-system]
 requires = ["hatchling"]
