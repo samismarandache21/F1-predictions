@@ -62,3 +62,29 @@ def test_explain_surfaces_dependency_values(config_dir: Path) -> None:
     dep = explanation.depends_on["car.lap.time_s"]
     assert dep is not None
     assert dep.data == 91.2
+
+
+def test_history_for_driver_returns_every_lap_sorted_by_time(config_dir: Path) -> None:
+    registry = VariableRegistry.load(config_dir / "variables")
+    snap = Snapshot(state_version="s0", registry=registry)
+
+    lap2 = _val("car.lap.observation", "44:2", Kind.OBSERVED, {"lap": 2}, "2026-01-01T00:02:00")
+    lap1 = _val("car.lap.observation", "44:1", Kind.OBSERVED, {"lap": 1}, "2026-01-01T00:01:00")
+    lap3 = _val("car.lap.observation", "44:3", Kind.OBSERVED, {"lap": 3}, "2026-01-01T00:03:00")
+    # A different driver's laps must never leak into "44"'s history, even
+    # though scope_id is a plain string prefix match, not a structured key.
+    other_driver = _val(
+        "car.lap.observation", "144:1", Kind.OBSERVED, {"lap": 1}, "2026-01-01T00:01:30"
+    )
+    snap = snap.with_updates([lap2, lap1, lap3, other_driver], "s1")
+
+    history = snap.history_for_driver("car.lap.observation", "44")
+
+    assert [value.data["lap"] for value in history] == [1, 2, 3]
+
+
+def test_history_for_driver_is_empty_for_a_driver_with_no_laps(config_dir: Path) -> None:
+    registry = VariableRegistry.load(config_dir / "variables")
+    snap = Snapshot(state_version="s0", registry=registry)
+
+    assert snap.history_for_driver("car.lap.observation", "44") == []

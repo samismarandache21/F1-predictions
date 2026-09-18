@@ -36,6 +36,26 @@ class Snapshot:
     def get(self, var_id: str, scope_id: str = "") -> Value | None:
         return self.current.get((var_id, scope_id))
 
+    def history_for_driver(self, var_id: str, driver: str) -> list[Value]:
+        """All values for `var_id` whose scope_id is `"{driver}:{lap}"`,
+        sorted by timestamp. Most car_lap-scoped variables only ever need
+        the *latest* value per driver (scope_id is just the driver number),
+        which the plain (var_id, scope_id) key already gives via `get`. A
+        handful of variables — car.lap.observation, so far — instead need
+        the *whole stint's history* per driver (a degradation fit needs
+        every lap, not just the last one), and use this `driver:lap`
+        scope_id convention specifically so history doesn't get lost to
+        `with_updates`' per-key precedence resolution. See
+        docs/plan/phase-2.md T2.
+        """
+        prefix = f"{driver}:"
+        matches = [
+            value
+            for (candidate_var_id, scope_id), value in self.current.items()
+            if candidate_var_id == var_id and scope_id.startswith(prefix)
+        ]
+        return sorted(matches, key=lambda value: value.ts)
+
     def with_updates(self, new_values: Iterable[Value], state_version: str) -> Snapshot:
         merged = dict(self.current)
         for val in new_values:

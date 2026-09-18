@@ -8,7 +8,8 @@ Docs live in `docs/`. If they conflict, this is the order of authority:
 2. `docs/f1-strategy-design.md`: architecture, data sources, API, DB.
 3. `docs/f1-strategy-engine-spec.md`: simulator details.
 4. `docs/f1-driver-circuit-intel.md` and `docs/f1-driver-ratings.md`: metrics and ratings.
-5. `docs/plan/phase-1.md`: **the current milestone. Work only on what it lists.**
+5. `docs/plan/phase-1.md`: M1 "Watch" — complete (T1–T10).
+6. `docs/plan/phase-2.md`: **the current milestone (M2 "Predict pace"). Work only on what it lists.**
 
 Known stale points in the older docs (always follow the foundation doc):
 - Grid size is **22, from config**, never hard-coded 20.

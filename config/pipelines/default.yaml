@@ -1,7 +1,13 @@
 # Which f1core.Component implementations are active. Empty in Phase 1 (M1 "Watch"):
 # there are no derived/predicted variables yet, only observed ones flowing straight
-# from ingestion through race state to the API. Later milestones register components
-# here (e.g. TyreDegEstimator, LapTimePredictor, MonteCarloEngine) without touching
-# the orchestrator itself — see docs/f1-strategy-foundation.md §4.5-4.6.
+# from ingestion through race state to the API.
+#
+# M2 (docs/plan/phase-2.md) builds the orchestrator (f1core.orchestrator) this file
+# is meant to drive, but wires its first components (TyreDegEstimator, PaceEstimator,
+# LapTimePredictor, DeterministicRacePredictor) directly in f1state's composition
+# root for now rather than dynamically importing qualified names from here — that's
+# a small, well-contained addition to make later (foundation.md §4.5's "the config
+# chooses which one is active" still holds; it just isn't YAML-driven yet). Revisit
+# once there's a second implementation of some component worth swapping between.
 version: 1
 components: []

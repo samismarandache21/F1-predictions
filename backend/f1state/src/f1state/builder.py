@@ -15,7 +15,7 @@ matters ahead of the project's real 3.12 toolchain being installed).
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from f1state.state import PitStopRecord, RaceState
 
@@ -82,6 +82,42 @@ class RaceStateBuilder:
         if handler is None:
             return state, []  # unknown event type: degrade gracefully, never crash the pipeline
         return handler(state, event)  # type: ignore[no-any-return]
+
+    def apply_predictions(
+        self, state: RaceState, driver: int, resolved: dict[str, Any]
+    ) -> RaceState:
+        """Mirrors a driver's resolved M2 prediction Values (from
+        f1state.predictions.PredictionPipeline) onto CarState. `resolved`
+        values are read only through duck-typed `.data`/`.kind`/
+        `.uncertainty` attributes — never a real f1core.Value is
+        constructed or imported here — so this stays testable ahead of the
+        project's real 3.12 toolchain, same as `apply`'s event handling.
+        `resolved` is whatever subset of docs/plan/phase-2.md's five
+        prediction var_ids has resolved so far; a driver with no data yet
+        simply keeps their previous (default None) prediction fields.
+        """
+        car = state.car(driver)
+        deg_rate = resolved.get("car.tyre.deg_rate")
+        lap_time_pred = resolved.get("car.lap.time_pred")
+        finish_time_pred = resolved.get("car.race.finish_time_pred")
+        prediction = lap_time_pred or finish_time_pred
+
+        new_car = replace(
+            car,
+            deg_rate_s_per_lap=deg_rate.data if deg_rate is not None else car.deg_rate_s_per_lap,
+            deg_rate_kind=str(deg_rate.kind) if deg_rate is not None else car.deg_rate_kind,
+            deg_uncertainty=deg_rate.uncertainty if deg_rate is not None else car.deg_uncertainty,
+            predicted_lap_time_s=(
+                lap_time_pred.data if lap_time_pred is not None else car.predicted_lap_time_s
+            ),
+            predicted_finish_time_s=(
+                finish_time_pred.data
+                if finish_time_pred is not None
+                else car.predicted_finish_time_s
+            ),
+            prediction_kind=str(prediction.kind) if prediction is not None else car.prediction_kind,
+        )
+        return state.with_car(new_car)
 
     def _apply_lap_completed(
         self, state: RaceState, event: DomainEvent

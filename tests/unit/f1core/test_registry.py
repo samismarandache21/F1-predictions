@@ -37,6 +37,23 @@ def test_loads_all_m1_variables(config_dir: Path) -> None:
     assert registry["car.tyre.compound"].scope == Scope.CAR_STINT
 
 
+def test_loads_m2_prediction_variables(config_dir: Path) -> None:
+    registry = VariableRegistry.load(config_dir / "variables")
+    for var_id in [
+        "car.tyre.deg_rate",
+        "car.tyre.deg_cliff_lap",
+        "car.pace.base_s",
+        "car.lap.time_pred",
+        "car.race.finish_time_pred",
+    ]:
+        assert var_id in registry, var_id
+
+    # car.lap.time_pred is a separate variable from the observed
+    # car.lap.time_s, not the same id competing on kind (docs/plan/phase-2.md T1).
+    assert registry["car.lap.time_s"].kinds_allowed == ["observed"]
+    assert registry["car.lap.time_pred"].kinds_allowed == ["predicted"]
+
+
 def test_unknown_reference_fails_fast(tmp_path: Path) -> None:
     bad = _MINIMAL_VAR.replace("depends_on: []", "depends_on: [does.not.exist]")
     (tmp_path / "bad.yaml").write_text(bad)

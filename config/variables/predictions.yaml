@@ -1,0 +1,91 @@
+# M2 ("Predict pace") variables — see docs/plan/phase-2.md T1. Kept in their own
+# file rather than appended into car.yaml/tyre.yaml: this is genuinely new
+# surface area (the first variables with kind=estimated/predicted that matter),
+# and keeping it separate means M1's variable files, and their registry-loading
+# tests, are untouched.
+
+- id: car.lap.observation
+  scope: car_lap
+  dtype: object
+  unit: none
+  kinds_allowed: [observed]
+  depends_on: []
+  affects: [car.tyre.deg_rate, car.tyre.deg_cliff_lap, car.pace.base_s]
+  description: >
+    One completed lap's data as fed to the M2 models: {lap, tyre_age_laps, compound,
+    lap_time_s, is_clean_air, stint_number}. Unlike other car_lap variables, whose
+    scope_id is just the driver number (only the latest value matters), this one uses
+    scope_id "{driver}:{lap}" and is read back as a whole history via
+    Snapshot.history_for_driver — a degradation fit needs every lap in the stint, not
+    just the last one. Computed by f1state from the lap_completed domain event, using
+    the same clean-air definition as CLAUDE.md's glossary (interval > 2s, not an
+    in/out lap, green flag) — not a separate f1core variable, to avoid registering
+    car.lap.interval_s/track_status a second time under a different scope_id
+    convention just for this.
+
+- id: car.tyre.deg_rate
+  scope: car_stint
+  dtype: float
+  unit: s_per_lap
+  kinds_allowed: [prior, estimated]
+  depends_on: [car.lap.observation]
+  affects: [car.lap.time_pred, car.pace.base_s]
+  description: >
+    Linear tyre degradation rate for the current stint (seconds lost per lap of tyre
+    age), fuel-corrected and fit from clean-air laps only. Falls back to the
+    circuit/compound prior (widest uncertainty) under 5 clean laps.
+
+- id: car.tyre.deg_cliff_lap
+  scope: car_stint
+  dtype: int
+  unit: laps
+  kinds_allowed: [prior, estimated]
+  depends_on: [car.lap.observation]
+  affects: []
+  description: >
+    Estimated tyre age at which degradation accelerates sharply (the "cliff"). Tracked
+    for future use (M3+ pit-stop prediction) but not yet consumed by any predictor — M2
+    v1's car.lap.time_pred/car.race.finish_time_pred only apply the linear deg_rate
+    term. See docs/plan/phase-2.md T4.
+
+- id: car.pace.base_s
+  scope: car
+  dtype: float
+  unit: _s
+  kinds_allowed: [prior, estimated]
+  depends_on: [car.lap.observation, car.tyre.deg_rate]
+  affects: [car.lap.time_pred]
+  description: >
+    EWMA base lap pace from fuel- and tyre-corrected clean-air laps, i.e. what this
+    driver's lap time would be on a fresh tyre with no fuel load. Tyre correction uses
+    the current stint's car.tyre.deg_rate applied uniformly across a driver's whole
+    lap history — a deliberate M2 v1 simplification (no per-stint deg_rate history is
+    kept, only the latest resolved value); see docs/plan/phase-2.md T3.
+
+- id: car.lap.time_pred
+  scope: car_lap
+  dtype: float
+  unit: _s
+  kinds_allowed: [predicted]
+  depends_on: [car.lap.observation, car.pace.base_s, car.tyre.deg_rate]
+  affects: [car.race.finish_time_pred]
+  description: >
+    Predicted lap time for this driver's next lap (current lap + 1), inverting
+    car.pace.base_s/car.tyre.deg_rate's fuel/tyre corrections for that lap's fuel load
+    and tyre age. Does not (yet) apply deg_cliff_lap's cliff-acceleration term — M2 v1
+    only fits a linear rate, so there's no estimated magnitude for the acceleration
+    beyond the cliff to apply; see docs/plan/phase-2.md T4.
+
+- id: car.race.finish_time_pred
+  scope: car
+  dtype: float
+  unit: _s
+  kinds_allowed: [predicted]
+  depends_on: [car.lap.observation, car.pace.base_s, car.tyre.deg_rate, race.total_laps]
+  affects: []
+  description: >
+    Predicted total race time: real elapsed time over the laps completed so far, plus a
+    predicted lap time (same model as car.lap.time_pred) for every remaining lap,
+    extrapolating the current stint's degradation trend to the flag under the
+    assumption of no further pit stops — a deliberate M2 simplification (pit-stop
+    prediction is M3). See docs/plan/phase-2.md.

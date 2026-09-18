@@ -35,8 +35,36 @@ class _FakeLocation:
     type: str = "location_update"
 
 
-def _session() -> ReplaySession:
-    return ReplaySession(9912, clock=None, builder=RaceStateBuilder(), initial_state=RaceState(session_key=9912))
+def _session(predictions: object = None) -> ReplaySession:
+    return ReplaySession(
+        9912,
+        clock=None,
+        builder=RaceStateBuilder(),
+        initial_state=RaceState(session_key=9912),
+        predictions=predictions,
+    )
+
+
+class _FakeValue:
+    def __init__(self, data: object, kind: str = "estimated", uncertainty: float = 0.1) -> None:
+        self.data = data
+        self.kind = kind
+        self.uncertainty = uncertainty
+
+
+class _FakePredictionPipeline:
+    """Duck-typed stand-in for f1state.predictions.PredictionPipeline —
+    real f1core.Value construction isn't needed to test that
+    ReplaySession.consume drives it correctly on lap_completed events."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[int, int]] = []
+
+    def on_lap_completed(
+        self, car: object, event: object, total_laps: object = None
+    ) -> dict[str, _FakeValue]:
+        self.calls.append((event.driver, event.lap))
+        return {"car.tyre.deg_rate": _FakeValue(0.05)}
 
 
 def test_consume_applies_events_and_updates_state() -> None:
@@ -80,3 +108,31 @@ def test_positions_property_returns_a_copy() -> None:
 
     assert snapshot == {1: (1.0, 2.0)}
     assert session.positions == {1: (99.0, 99.0)}
+
+
+def test_predictions_pipeline_is_driven_on_lap_completed_and_mirrored_onto_state() -> None:
+    predictions = _FakePredictionPipeline()
+    session = _session(predictions)
+
+    session.consume([_FakeLap(driver=1, lap=1)])
+
+    assert predictions.calls == [(1, 1)]
+    assert session.state.car(1).deg_rate_s_per_lap == 0.05
+    assert session.state.car(1).deg_rate_kind == "estimated"
+
+
+def test_predictions_pipeline_is_not_driven_by_non_lap_events() -> None:
+    predictions = _FakePredictionPipeline()
+    session = _session(predictions)
+
+    session.consume([_FakeLocation(driver=1, x_m=1.0, y_m=2.0)])
+
+    assert predictions.calls == []
+
+
+def test_no_predictions_pipeline_is_a_no_op_like_before_m2() -> None:
+    session = _session(predictions=None)
+
+    session.consume([_FakeLap(driver=1, lap=1)])
+
+    assert session.state.car(1).deg_rate_s_per_lap is None

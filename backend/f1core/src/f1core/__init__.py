@@ -12,17 +12,20 @@ from f1core.exceptions import (
     UnknownVariableError,
 )
 from f1core.graph import DependencyGraph
+from f1core.orchestrator import Component, Orchestrator
 from f1core.registry import Scope, VariableDef, VariableRegistry
 from f1core.snapshot import Explanation, Snapshot
 from f1core.values import Kind, Value, precedence
 
 __all__ = [
+    "Component",
     "CycleError",
     "DependencyGraph",
     "DuplicateVariableError",
     "Explanation",
     "F1CoreError",
     "Kind",
+    "Orchestrator",
     "Scope",
     "Snapshot",
     "UnknownValueKindError",

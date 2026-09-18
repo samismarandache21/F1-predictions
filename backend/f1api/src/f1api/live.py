@@ -22,19 +22,20 @@ from typing import Any, Optional
 
 from f1ingest.db.schema import sessions as sessions_table
 from f1ingest.publisher import InMemoryPublisher
-from f1state.builder import RaceStateBuilder
+from f1state.builder import LapCompletedTrigger, RaceStateBuilder
 from f1state.state import RaceState
 from sqlalchemy import Engine, select
 
-# f1ingest.adapters.replay and f1core.config.season are imported lazily,
-# inside LiveReplayManager.create()/_team_lookup() below, not at module
-# level: the former pulls in f1core.events (constructing real domain
-# events), and the latter pulls in f1core's package init directly — both
-# need Python >= 3.10 to resolve (same limitation as the rest of f1core).
-# Keeping them out of this module's top level means ReplaySession and
-# LiveReplayManager's class definitions (and everything except an actual
-# `create()` call) stay testable ahead of the real 3.12 toolchain — see
-# the T8 summary.
+# f1ingest.adapters.replay, f1core.config.season, and (M2, T5)
+# f1state.predictions are imported lazily, inside
+# LiveReplayManager.create()/_team_lookup() below, not at module level:
+# each pulls in f1core (constructing real domain events, the season
+# config, or f1core.Value/Snapshot respectively) — all need Python >= 3.10
+# to resolve (same limitation as the rest of f1core). Keeping them out of
+# this module's top level means ReplaySession and LiveReplayManager's
+# class definitions (and everything except an actual `create()` call) stay
+# testable ahead of the real 3.12 toolchain — see the T8/phase-2 T5
+# summaries.
 
 # backend/f1api/src/f1api/live.py -> repo root is 4 parents up (see
 # f1ingest.cli's identical pattern).
@@ -54,12 +55,18 @@ class ReplaySession:
     """
 
     def __init__(
-        self, session_key: int, clock: Any, builder: RaceStateBuilder, initial_state: RaceState
+        self,
+        session_key: int,
+        clock: Any,
+        builder: RaceStateBuilder,
+        initial_state: RaceState,
+        predictions: Optional[Any] = None,
     ) -> None:
         self.session_key = session_key
         self.clock = clock
         self._builder = builder
         self._state = initial_state
+        self._predictions = predictions
         self._positions: dict[int, tuple[float, float]] = {}
         self._lock = threading.Lock()
 
@@ -77,13 +84,29 @@ class ReplaySession:
         """Apply each event as it arrives. Only needs RaceStateBuilder's
         duck-typed `event.type` dispatch (see f1state.builder) — no
         f1core import required here, which is what keeps this testable
-        with fake events."""
+        with fake events. `self._predictions` (a
+        f1state.predictions.PredictionPipeline, or None in tests/M1-only
+        use) is driven the same way, purely through the duck-typed
+        LapCompletedTrigger it reacts to — see docs/plan/phase-2.md T5."""
         for event in events:
             with self._lock:
                 if event.type == "location_update":
                     self._positions[event.driver] = (event.x_m, event.y_m)
-                else:
-                    self._state, _triggers = self._builder.apply(self._state, event)
+                    continue
+
+                self._state, triggers = self._builder.apply(self._state, event)
+                if self._predictions is None:
+                    continue
+                for trigger in triggers:
+                    if not isinstance(trigger, LapCompletedTrigger):
+                        continue
+                    car = self._state.car(trigger.driver)
+                    resolved = self._predictions.on_lap_completed(
+                        car, event, total_laps=self._state.total_laps
+                    )
+                    self._state = self._builder.apply_predictions(
+                        self._state, trigger.driver, resolved
+                    )
 
 
 class LiveReplayManager:
@@ -93,6 +116,7 @@ class LiveReplayManager:
 
     def create(self, session_key: int, speed: float = 1.0) -> str:
         from f1ingest.adapters.replay import DbRowSource, ReplayAdapter
+        from f1state.predictions import PredictionPipeline
 
         row = self._session_row(session_key)
         if row is None:
@@ -116,8 +140,10 @@ class LiveReplayManager:
             total_laps=row["total_laps"],
         )
 
+        predictions = PredictionPipeline(_REPO_ROOT / "config")
+
         live_id = uuid.uuid4().hex
-        session = ReplaySession(session_key, clock, builder, initial_state)
+        session = ReplaySession(session_key, clock, builder, initial_state, predictions)
         self._sessions[live_id] = session
 
         thread = threading.Thread(

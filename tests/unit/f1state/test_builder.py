@@ -259,3 +259,66 @@ def test_team_is_not_overwritten_once_set() -> None:
     state, _ = builder_with_different_map.apply(state, _FakeLap(driver=1, lap=2))
 
     assert state.car(1).team == "red_bull"
+
+
+class _FakeValue:
+    """Duck-typed stand-in for f1core.values.Value — apply_predictions
+    only reads .data/.kind/.uncertainty, so this exercises it without
+    needing real f1core (docs/plan/phase-2.md T5)."""
+
+    def __init__(self, data: object, kind: str, uncertainty: float | None = None) -> None:
+        self.data = data
+        self.kind = kind
+        self.uncertainty = uncertainty
+
+
+def test_apply_predictions_mirrors_deg_rate_onto_car_state() -> None:
+    builder = RaceStateBuilder()
+
+    state = builder.apply_predictions(
+        _state(), driver=1, resolved={"car.tyre.deg_rate": _FakeValue(0.05, "estimated", 0.02)}
+    )
+
+    car = state.car(1)
+    assert car.deg_rate_s_per_lap == 0.05
+    assert car.deg_rate_kind == "estimated"
+    assert car.deg_uncertainty == 0.02
+
+
+def test_apply_predictions_mirrors_lap_time_and_finish_time() -> None:
+    builder = RaceStateBuilder()
+    resolved = {
+        "car.lap.time_pred": _FakeValue(91.2, "predicted"),
+        "car.race.finish_time_pred": _FakeValue(4820.5, "predicted"),
+    }
+
+    state = builder.apply_predictions(_state(), driver=1, resolved=resolved)
+
+    car = state.car(1)
+    assert car.predicted_lap_time_s == 91.2
+    assert car.predicted_finish_time_s == 4820.5
+    assert car.prediction_kind == "predicted"
+
+
+def test_apply_predictions_with_an_empty_dict_keeps_existing_values() -> None:
+    builder = RaceStateBuilder()
+    state = builder.apply_predictions(
+        _state(), driver=1, resolved={"car.tyre.deg_rate": _FakeValue(0.05, "estimated")}
+    )
+
+    state = builder.apply_predictions(state, driver=1, resolved={})
+
+    # A driver with no new resolved values this lap (e.g. below the
+    # min-clean-laps threshold every Component falls back on) keeps their
+    # previous prediction fields rather than being reset to None.
+    assert state.car(1).deg_rate_s_per_lap == 0.05
+
+
+def test_apply_predictions_does_not_affect_other_drivers() -> None:
+    builder = RaceStateBuilder()
+
+    state = builder.apply_predictions(
+        _state(), driver=1, resolved={"car.tyre.deg_rate": _FakeValue(0.05, "estimated")}
+    )
+
+    assert state.car(2).deg_rate_s_per_lap is None

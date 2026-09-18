@@ -133,3 +133,46 @@ def test_websocket_unknown_live_id_is_rejected(client) -> None:
     with pytest.raises(WebSocketDisconnect):
         with client.websocket_connect("/live/does-not-exist/stream") as ws:
             ws.receive_json()
+
+
+def test_websocket_frame_includes_a_populated_prediction(app, client) -> None:
+    """docs/plan/phase-2.md T6's 'Done when': the same live-router pattern
+    covers a car with M2 prediction fields set, riding the existing 4 Hz
+    WS stream (no new endpoint)."""
+    state = RaceState(session_key=9912, lap=10)
+    state = state.with_car(
+        CarState(
+            driver=1,
+            deg_rate_s_per_lap=0.028,
+            deg_rate_kind="estimated",
+            deg_uncertainty=0.02,
+            predicted_lap_time_s=91.4,
+            predicted_finish_time_s=4820.5,
+            prediction_kind="predicted",
+        )
+    )
+    _inject_session(app, "abc123", state)
+
+    with client.websocket_connect("/live/abc123/stream") as ws:
+        frame = ws.receive_json()
+
+    car = frame["state"]["cars"]["1"]
+    assert car["deg_rate_s_per_lap"] == 0.028
+    assert car["deg_rate_kind"] == "estimated"
+    assert car["deg_uncertainty"] == 0.02
+    assert car["predicted_lap_time_s"] == 91.4
+    assert car["predicted_finish_time_s"] == 4820.5
+    assert car["prediction_kind"] == "predicted"
+
+
+def test_websocket_frame_has_null_predictions_for_a_car_with_none_yet(app, client) -> None:
+    state = RaceState(session_key=9912, lap=1)
+    state = state.with_car(CarState(driver=1))
+    _inject_session(app, "abc123", state)
+
+    with client.websocket_connect("/live/abc123/stream") as ws:
+        frame = ws.receive_json()
+
+    car = frame["state"]["cars"]["1"]
+    assert car["deg_rate_s_per_lap"] is None
+    assert car["prediction_kind"] is None

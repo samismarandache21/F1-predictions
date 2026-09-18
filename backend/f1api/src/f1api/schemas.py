@@ -59,6 +59,15 @@ class CarStateOut(BaseModel):
     retired: bool
     last_lap: Optional[int] = None
     last_lap_time_s: Optional[float] = None
+    # M2 predictions (docs/plan/phase-2.md T6), mirrored 1:1 from CarState —
+    # see f1state.state's module docstring for why prediction_kind is
+    # shared between the two predicted_* fields rather than split in two.
+    deg_rate_s_per_lap: Optional[float] = None
+    deg_rate_kind: Optional[str] = None
+    deg_uncertainty: Optional[float] = None
+    predicted_lap_time_s: Optional[float] = None
+    predicted_finish_time_s: Optional[float] = None
+    prediction_kind: Optional[str] = None
 
     @classmethod
     def from_car_state(cls, car: Any) -> CarStateOut:
@@ -86,6 +95,12 @@ class CarStateOut(BaseModel):
             retired=car.retired,
             last_lap=car.last_lap,
             last_lap_time_s=car.last_lap_time_s,
+            deg_rate_s_per_lap=car.deg_rate_s_per_lap,
+            deg_rate_kind=car.deg_rate_kind,
+            deg_uncertainty=car.deg_uncertainty,
+            predicted_lap_time_s=car.predicted_lap_time_s,
+            predicted_finish_time_s=car.predicted_finish_time_s,
+            prediction_kind=car.prediction_kind,
         )
 
 

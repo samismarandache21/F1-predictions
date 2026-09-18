@@ -50,6 +50,18 @@ class CarState:
     retired: bool = False
     last_lap: int | None = None
     last_lap_time_s: float | None = None
+    # M2 predictions (docs/plan/phase-2.md T5), mirrored from f1core's
+    # resolved Values by RaceStateBuilder.apply_predictions. deg_rate_kind
+    # is "prior"/"estimated" (car.tyre.deg_rate's own kind); prediction_kind
+    # covers both predicted_* fields together since car.lap.time_pred/
+    # car.race.finish_time_pred each allow only kind=predicted in M2 v1 —
+    # there's no separate provenance to track per-field yet.
+    deg_rate_s_per_lap: float | None = None
+    deg_rate_kind: str | None = None
+    deg_uncertainty: float | None = None
+    predicted_lap_time_s: float | None = None
+    predicted_finish_time_s: float | None = None
+    prediction_kind: str | None = None
 
 
 @dataclass(frozen=True)
