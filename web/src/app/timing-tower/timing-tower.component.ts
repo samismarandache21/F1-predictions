@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 
 import { ReplayStore } from '../core/replay.store';
-import { sortCarsByPosition } from './sort-cars';
+import { predictedPositionsByDriver, sortCarsByPosition } from './sort-cars';
 
 @Component({
   selector: 'app-timing-tower',
@@ -17,6 +17,8 @@ import { sortCarsByPosition } from './sort-cars';
           <th>Tyre</th>
           <th>Stops</th>
           <th>Last lap</th>
+          <th>Pred. pos</th>
+          <th>Pred. finish</th>
         </tr>
       </thead>
       <tbody>
@@ -38,6 +40,21 @@ import { sortCarsByPosition } from './sort-cars';
             <td>{{ car.compound ?? '—' }}<span class="tyre-age">{{ tyreAgeSuffix(car.tyre_age_laps) }}</span></td>
             <td>{{ car.pit_stops }}</td>
             <td>{{ formatLapTime(car.last_lap_time_s) }}</td>
+            <td [class.pred-gain]="predictedDelta(car) > 0" [class.pred-loss]="predictedDelta(car) < 0">
+              {{ predictedPositions().get(car.driver) ?? '—' }}
+            </td>
+            <td>
+              {{ formatLapTime(car.predicted_finish_time_s) }}
+              @if (car.prediction_kind && car.deg_rate_kind) {
+                <span
+                  class="badge"
+                  [class.prior]="car.deg_rate_kind === 'prior'"
+                  [title]="degRateKindTitle(car.deg_rate_kind)"
+                >
+                  {{ car.deg_rate_kind }}
+                </span>
+              }
+            </td>
           </tr>
         }
       </tbody>
@@ -87,6 +104,26 @@ import { sortCarsByPosition } from './sort-cars';
         color: var(--f1-muted);
         margin-left: 0.25rem;
       }
+      .pred-gain {
+        color: #2ecc71;
+      }
+      .pred-loss {
+        color: var(--f1-accent);
+      }
+      .badge {
+        display: inline-block;
+        margin-left: 0.35rem;
+        padding: 0.02rem 0.4rem;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        background: color-mix(in srgb, var(--f1-accent) 25%, transparent);
+        color: var(--f1-fg);
+      }
+      .badge.prior {
+        background: color-mix(in srgb, var(--f1-muted) 30%, transparent);
+        color: var(--f1-muted);
+      }
     `,
   ],
 })
@@ -94,8 +131,37 @@ export class TimingTowerComponent {
   protected readonly store = inject(ReplayStore);
   protected readonly sortedCars = computed(() => sortCarsByPosition(this.store.cars()));
 
+  /** V5 (docs/plan/phase-2.md T7): each car's predicted running-order
+   * position, ranked by car.race.finish_time_pred across all 22 drivers —
+   * see sort-cars.ts's predictedPositionsByDriver for why this ranking
+   * has to happen here rather than in f1engine. */
+  protected readonly predictedPositions = computed(() =>
+    predictedPositionsByDriver(
+      this.store
+        .cars()
+        .map((car) => ({ driver: car.driver, predictedFinishTimeS: car.predicted_finish_time_s })),
+    ),
+  );
+
   follow(driver: number): void {
     this.store.setFollowedDriver(this.store.followedDriver() === driver ? null : driver);
+  }
+
+  degRateKindTitle(kind: string): string {
+    return kind === 'prior'
+      ? 'Degradation rate is a generic prior, not yet fit from actual laps'
+      : 'Degradation rate fit from actual clean-air laps';
+  }
+
+  /** Positive: predicted to gain positions from here (predicted rank
+   * better than current); negative: predicted to lose them. Zero/unknown
+   * when either figure is missing. */
+  predictedDelta(car: { driver: number; position: number | null }): number {
+    const predicted = this.predictedPositions().get(car.driver);
+    if (predicted == null || car.position == null) {
+      return 0;
+    }
+    return car.position - predicted;
   }
 
   formatGap(value: number | null): string {

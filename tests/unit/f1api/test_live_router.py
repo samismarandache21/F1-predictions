@@ -149,6 +149,7 @@ def test_websocket_frame_includes_a_populated_prediction(app, client) -> None:
             predicted_lap_time_s=91.4,
             predicted_finish_time_s=4820.5,
             prediction_kind="predicted",
+            last_lap_is_clean_air=True,
         )
     )
     _inject_session(app, "abc123", state)
@@ -163,6 +164,7 @@ def test_websocket_frame_includes_a_populated_prediction(app, client) -> None:
     assert car["predicted_lap_time_s"] == 91.4
     assert car["predicted_finish_time_s"] == 4820.5
     assert car["prediction_kind"] == "predicted"
+    assert car["last_lap_is_clean_air"] is True
 
 
 def test_websocket_frame_has_null_predictions_for_a_car_with_none_yet(app, client) -> None:

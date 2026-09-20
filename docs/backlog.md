@@ -1,8 +1,41 @@
 # Backlog
 
-Ideas and scope creep deferred during Phase 1, per CLAUDE.md rule 12 ("don't expand scope — put
-ideas here instead"). Nothing here should be built until its milestone (see
+Ideas and scope creep deferred during Phase 1 and Phase 2, per CLAUDE.md rule 12 ("don't expand
+scope — put ideas here instead"). Nothing here should be built until its milestone (see
 `docs/f1-strategy-foundation.md` §9) is reached.
+
+## Deferred during Phase 2 (M2 "Predict pace")
+
+- **Kalman filter for pace/degradation refitting.** design.md/engine-spec.md describe one as a
+  later live-refinement; M2 v1 uses a plain refit-on-every-new-lap instead (fully deterministic,
+  enough to demo P1/P2). Revisit once a live-refinement need actually shows up — see
+  `docs/plan/phase-2.md`'s Decisions table ("Fit method").
+- **Estimating a real tyre-degradation cliff slope.** M2 v1's fit is linear-only
+  (`f1models.degradation_math.fit_linear_degradation`); `car.tyre.deg_cliff_lap` is tracked as a
+  fixed prior but never fed into a prediction, because a single stint's laps can't identify a
+  3-parameter linear+cliff model reliably (validated live against the real Monza fixture during
+  T2 — see that module's docstring). T8's backtest found this is exactly why a mid-stint finish-time
+  prediction came out 3.2% low: the fit has no way to anticipate wear it hasn't seen evidence of
+  yet. Needs either a cross-stint/mined circuit-level prior for `k1` (research.md §3.2) or enough
+  laps in a single stint to identify the cliff directly — whichever a future milestone can supply.
+- **Per-circuit fuel-effect calibration.** `FUEL_EFFECT_S_PER_LAP = 0.05` (Pitwall's generic
+  default, research.md §3.4/§10.5) is used everywhere; no circuit-specific value exists yet.
+- **Driver-skill priors from `docs/f1-driver-ratings.md`.** `car.pace.base_s`'s EWMA currently
+  starts every driver from a flat, equal prior (seeded by their own first lap) — no use is made of
+  the ratings doc's per-driver metrics to seed a more informed starting pace.
+- **Real uncertainty propagation.** `f1engine.predictors`'s `_DEFAULT_UNCERTAINTY_S`/the additive
+  `pace.uncertainty + deg_rate.uncertainty` combination is a simple upper bound, not a calibrated
+  error-propagation model.
+- Frontend `DegradationHistoryTracker` (V4, `web/src/app/degradation-chart/`) accumulates lap
+  history purely client-side from WS frames, since the backend has never streamed full lap history
+  to the frontend. Switching the followed driver mid-replay only shows history accumulated since
+  the page loaded, not the whole race so far — fine for a live companion, but worth a proper
+  backend history endpoint if a "show me this driver's whole race" view is ever wanted.
+- `web/src/app/core/api-types.ts` has grown further out of sync with `f1api/schemas.py` (M2 added
+  six more `CarStateOut` fields by hand) — see the existing `make types` entry below, now more
+  pressing.
+
+## Deferred during Phase 1 (M1 "Watch")
 
 - Third fixture race (wet or SC-affected) for T4 — not yet chosen. Candidates should be picked
   from a 2025 or 2026 race with a confirmed SC/VSC/rain period, per `docs/plan/phase-1.md`.

@@ -62,6 +62,10 @@ class CarState:
     predicted_lap_time_s: float | None = None
     predicted_finish_time_s: float | None = None
     prediction_kind: str | None = None
+    # Whether the last completed lap counted as clean air (CLAUDE.md's
+    # glossary), so the V4 degradation chart (docs/plan/phase-2.md T7) can
+    # show which observed points actually fed the fit vs. which didn't.
+    last_lap_is_clean_air: bool | None = None
 
 
 @dataclass(frozen=True)

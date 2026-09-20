@@ -46,7 +46,22 @@ export interface CarStateOut {
   retired: boolean;
   last_lap: number | null;
   last_lap_time_s: number | null;
+  // M2 predictions (docs/plan/phase-2.md T6/T7). prediction_kind is shared
+  // between predicted_lap_time_s/predicted_finish_time_s — see
+  // f1state/state.py's CarState docstring for why there's no separate
+  // per-field kind yet.
+  deg_rate_s_per_lap: number | null;
+  deg_rate_kind: PredictionKind | null;
+  deg_uncertainty: number | null;
+  predicted_lap_time_s: number | null;
+  predicted_finish_time_s: number | null;
+  prediction_kind: PredictionKind | null;
+  last_lap_is_clean_air: boolean | null;
 }
+
+/** f1core.values.Kind's string values that can actually appear on the M2
+ * prediction fields above (never "overridden"/"observed" for these). */
+export type PredictionKind = 'prior' | 'estimated' | 'predicted';
 
 export interface RaceStateOut {
   session_key: number;

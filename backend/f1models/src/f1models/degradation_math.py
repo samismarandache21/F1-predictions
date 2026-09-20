@@ -31,6 +31,16 @@ FUEL_EFFECT_S_PER_LAP = 0.05
 MIN_PLAUSIBLE_K1_S_PER_LAP = 0.0
 MAX_PLAUSIBLE_K1_S_PER_LAP = 0.22
 
+# TyreDegEstimator's fallback prior and its minimum-clean-laps gate
+# (docs/plan/phase-2.md T2/Decisions). Defined here, not in tyre.py, so
+# both the Component and anything doing the same math without f1core (the
+# T8 backtest) share one source of truth.
+MIN_CLEAN_LAPS_FOR_ESTIMATE = 5
+GENERIC_PRIOR_K1_S_PER_LAP = 0.08
+GENERIC_PRIOR_CLIFF_LAP = 20
+PRIOR_UNCERTAINTY = 0.05
+ESTIMATED_UNCERTAINTY = 0.02
+
 
 def fuel_corrected_lap_time(
     lap_time_s: float, lap_number: int, fuel_effect_s_per_lap: float = FUEL_EFFECT_S_PER_LAP

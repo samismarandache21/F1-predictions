@@ -10,6 +10,14 @@ from collections.abc import Sequence
 
 DEFAULT_EWMA_ALPHA = 0.3
 
+# PaceEstimator's minimum-clean-laps gate and uncertainty levels
+# (docs/plan/phase-2.md T3). Defined here, not in pace.py, so both the
+# Component and anything doing the same math without f1core (the T8
+# backtest) share one source of truth.
+MIN_CLEAN_LAPS_FOR_ESTIMATE = 3
+PRIOR_UNCERTAINTY_S = 2.0
+ESTIMATED_UNCERTAINTY_S = 0.3
+
 
 def tyre_corrected_lap_time(
     fuel_corrected_time_s: float, tyre_age_laps: int, deg_rate_s_per_lap: float

@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { DegradationChartComponent } from '../degradation-chart/degradation-chart.component';
 import { EventBannerComponent } from '../event-banner/event-banner.component';
 import { PitPanelComponent } from '../pit-panel/pit-panel.component';
 import { ReplayControlsComponent } from '../replay-controls/replay-controls.component';
@@ -12,6 +13,7 @@ import { TrackMapComponent } from '../track-map/track-map.component';
   selector: 'app-replay-view',
   standalone: true,
   imports: [
+    DegradationChartComponent,
     EventBannerComponent,
     PitPanelComponent,
     ReplayControlsComponent,
@@ -31,6 +33,7 @@ import { TrackMapComponent } from '../track-map/track-map.component';
           </div>
           <div class="side-pane">
             <app-timing-tower />
+            <app-degradation-chart />
             <app-pit-panel />
           </div>
         </div>

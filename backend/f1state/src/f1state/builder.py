@@ -92,11 +92,12 @@ class RaceStateBuilder:
         `.uncertainty` attributes — never a real f1core.Value is
         constructed or imported here — so this stays testable ahead of the
         project's real 3.12 toolchain, same as `apply`'s event handling.
-        `resolved` is whatever subset of docs/plan/phase-2.md's five
-        prediction var_ids has resolved so far; a driver with no data yet
-        simply keeps their previous (default None) prediction fields.
+        `resolved` is whatever subset of docs/plan/phase-2.md's six
+        prediction/observation var_ids has resolved so far; a driver with
+        no data yet simply keeps their previous (default None) fields.
         """
         car = state.car(driver)
+        observation = resolved.get("car.lap.observation")
         deg_rate = resolved.get("car.tyre.deg_rate")
         lap_time_pred = resolved.get("car.lap.time_pred")
         finish_time_pred = resolved.get("car.race.finish_time_pred")
@@ -104,6 +105,11 @@ class RaceStateBuilder:
 
         new_car = replace(
             car,
+            last_lap_is_clean_air=(
+                observation.data["is_clean_air"]
+                if observation is not None
+                else car.last_lap_is_clean_air
+            ),
             deg_rate_s_per_lap=deg_rate.data if deg_rate is not None else car.deg_rate_s_per_lap,
             deg_rate_kind=str(deg_rate.kind) if deg_rate is not None else car.deg_rate_kind,
             deg_uncertainty=deg_rate.uncertainty if deg_rate is not None else car.deg_uncertainty,

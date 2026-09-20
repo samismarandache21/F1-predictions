@@ -23,9 +23,11 @@ if TYPE_CHECKING:
     from f1core.values import Value
     from f1state.state import CarState
 
-# Resolved var_ids RaceStateBuilder.apply_predictions knows how to mirror
-# onto CarState. Keeping this list here (not in builder.py) means adding a
-# new M2+ prediction only touches this module, not the event-dispatch one.
+# Resolved var_ids (besides car.lap.observation itself, handled separately
+# below since it lives under a different scope_id convention)
+# RaceStateBuilder.apply_predictions knows how to mirror onto CarState.
+# Keeping this list here (not in builder.py) means adding a new M2+
+# prediction only touches this module, not the event-dispatch one.
 RESOLVED_VAR_IDS = (
     "car.tyre.deg_rate",
     "car.tyre.deg_cliff_lap",
@@ -103,24 +105,23 @@ class PredictionPipeline:
                     ts=event.ts,
                 )
             )
-        updates.append(
-            Value(
-                var_id="car.lap.observation",
-                scope_id=f"{scope_id}:{event.lap}",
-                kind=Kind.OBSERVED,
-                data={
-                    "lap": event.lap,
-                    "tyre_age_laps": event.tyre_age_laps or 0,
-                    "compound": event.compound,
-                    "lap_time_s": event.lap_time_s,
-                    "is_clean_air": _is_clean_air(event),
-                    "stint_number": car.stint_number,
-                },
-                source="f1state.predictions",
-                state_version=state_version,
-                ts=event.ts,
-            )
+        observation = Value(
+            var_id="car.lap.observation",
+            scope_id=f"{scope_id}:{event.lap}",
+            kind=Kind.OBSERVED,
+            data={
+                "lap": event.lap,
+                "tyre_age_laps": event.tyre_age_laps or 0,
+                "compound": event.compound,
+                "lap_time_s": event.lap_time_s,
+                "is_clean_air": _is_clean_air(event),
+                "stint_number": car.stint_number,
+            },
+            source="f1state.predictions",
+            state_version=state_version,
+            ts=event.ts,
         )
+        updates.append(observation)
         self._snapshot = self._snapshot.with_updates(updates, state_version)
         self._snapshot = self._orchestrator.recompute(
             self._snapshot,
@@ -129,7 +130,14 @@ class PredictionPipeline:
             state_version=state_version,
         )
 
-        resolved = {}
+        # car.lap.observation itself is returned alongside its downstream
+        # predictions (not looked up via self._snapshot.get, which is keyed
+        # by the bare scope_id — car.lap.observation uses "{driver}:{lap}"
+        # instead) so RaceStateBuilder.apply_predictions can mirror
+        # is_clean_air for the V4 degradation chart (docs/plan/phase-2.md
+        # T7): otherwise that flag would be computed here and discarded,
+        # never reaching the frontend.
+        resolved = {"car.lap.observation": observation}
         for var_id in RESOLVED_VAR_IDS:
             value = self._snapshot.get(var_id, scope_id)
             if value is not None:

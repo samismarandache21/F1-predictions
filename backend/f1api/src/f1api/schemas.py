@@ -68,6 +68,7 @@ class CarStateOut(BaseModel):
     predicted_lap_time_s: Optional[float] = None
     predicted_finish_time_s: Optional[float] = None
     prediction_kind: Optional[str] = None
+    last_lap_is_clean_air: Optional[bool] = None
 
     @classmethod
     def from_car_state(cls, car: Any) -> CarStateOut:
@@ -101,6 +102,7 @@ class CarStateOut(BaseModel):
             predicted_lap_time_s=car.predicted_lap_time_s,
             predicted_finish_time_s=car.predicted_finish_time_s,
             prediction_kind=car.prediction_kind,
+            last_lap_is_clean_air=car.last_lap_is_clean_air,
         )
 
 

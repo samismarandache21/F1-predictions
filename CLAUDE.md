@@ -9,7 +9,10 @@ Docs live in `docs/`. If they conflict, this is the order of authority:
 3. `docs/f1-strategy-engine-spec.md`: simulator details.
 4. `docs/f1-driver-circuit-intel.md` and `docs/f1-driver-ratings.md`: metrics and ratings.
 5. `docs/plan/phase-1.md`: M1 "Watch" — complete (T1–T10).
-6. `docs/plan/phase-2.md`: **the current milestone (M2 "Predict pace"). Work only on what it lists.**
+6. `docs/plan/phase-2.md`: M2 "Predict pace" — complete (T1–T9).
+7. **M3 (pit-stop prediction, `docs/f1-strategy-foundation.md` §9) has no plan doc yet.** Write
+   `docs/plan/phase-3.md` (mirroring phase-1/phase-2's structure) before starting any M3 work — see
+   rule 12.
 
 Known stale points in the older docs (always follow the foundation doc):
 - Grid size is **22, from config**, never hard-coded 20.

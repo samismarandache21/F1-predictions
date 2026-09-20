@@ -19,14 +19,16 @@ import numpy as np
 
 from f1core.snapshot import Snapshot
 from f1core.values import Kind, Value
-from f1models.degradation_math import FUEL_EFFECT_S_PER_LAP, clamp_degradation_rate, fit_linear_degradation
-
-MIN_CLEAN_LAPS_FOR_ESTIMATE = 5
-
-GENERIC_PRIOR_K1_S_PER_LAP = 0.08
-GENERIC_PRIOR_CLIFF_LAP = 20
-PRIOR_UNCERTAINTY = 0.05
-ESTIMATED_UNCERTAINTY = 0.02
+from f1models.degradation_math import (
+    ESTIMATED_UNCERTAINTY,
+    FUEL_EFFECT_S_PER_LAP,
+    GENERIC_PRIOR_CLIFF_LAP,
+    GENERIC_PRIOR_K1_S_PER_LAP,
+    MIN_CLEAN_LAPS_FOR_ESTIMATE,
+    PRIOR_UNCERTAINTY,
+    clamp_degradation_rate,
+    fit_linear_degradation,
+)
 
 
 @dataclass(frozen=True)

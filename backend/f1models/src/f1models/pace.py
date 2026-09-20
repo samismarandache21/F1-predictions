@@ -12,12 +12,15 @@ from __future__ import annotations
 from f1core.snapshot import Snapshot
 from f1core.values import Kind, Value
 from f1models.degradation_math import fuel_corrected_lap_time
-from f1models.pace_math import DEFAULT_EWMA_ALPHA, ewma, tyre_corrected_lap_time
+from f1models.pace_math import (
+    DEFAULT_EWMA_ALPHA,
+    ESTIMATED_UNCERTAINTY_S,
+    MIN_CLEAN_LAPS_FOR_ESTIMATE,
+    PRIOR_UNCERTAINTY_S,
+    ewma,
+    tyre_corrected_lap_time,
+)
 from f1models.tyre import GENERIC_PRIOR_K1_S_PER_LAP
-
-MIN_CLEAN_LAPS_FOR_ESTIMATE = 3
-PRIOR_UNCERTAINTY_S = 2.0
-ESTIMATED_UNCERTAINTY_S = 0.3
 
 
 class PaceEstimator:

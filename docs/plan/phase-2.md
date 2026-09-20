@@ -175,23 +175,96 @@ Each task: implement → tests → `make lint test` → short summary.
   types`' generated output) is **not** updated here — that's T7's job, since it's the first task that
   actually consumes these fields on the frontend.
 
-### T7 — frontend: V4 (degradation chart) and V5 (predicted finish/order)
-- A per-driver degradation chart (observed clean-air laps vs. the fitted curve) and a predicted
-  finish time/order column in (or next to) the timing tower, each showing its `kind` (a small
-  badge: "estimated" vs "prior") so the UI never claims false precision.
-- **Done when:** written and statically checked, consistent with T9's frontend caveat (unverified
-  without Node in this environment, unless that's changed by the time this is built).
+### T7 — frontend: V4 (degradation chart) and V5 (predicted finish/order) — done
+- Backend gap closed first: CarStateOut only ever carried the *latest* lap's fields, not full lap
+  history, and `is_clean_air` (needed for "observed clean-air laps vs. the fitted curve") was
+  computed inside `f1state.predictions.PredictionPipeline` and then discarded — never reached the
+  frontend. Added `car.lap.observation` to `PredictionPipeline`'s returned values (read via the
+  `observation` Value directly, not `Snapshot.get`, since it lives under the `"{driver}:{lap}"`
+  scope_id convention, not the bare driver one everything else uses) and a new
+  `CarState.last_lap_is_clean_air` field, mirrored through `apply_predictions` and
+  `CarStateOut`/`api-types.ts` the same way as T5/T6's other fields. This is completing what T7
+  itself already required, not new scope.
+- `web/src/app/degradation-chart/`: `degradation-history.ts` (pure, no Angular) — since the backend
+  never streams lap-by-lap history, `DegradationHistoryTracker` accumulates one point per completed
+  lap out of the same ~4 Hz WS frames the rest of the UI already consumes (mirroring how
+  `track-map/interpolation.ts` builds its own render buffer rather than needing the backend to
+  buffer positions), reset on a stint change so it never mixes tyres. `fittedLinePreview` draws a
+  two-point line through the mean of the *clean-air* points at the reported `deg_rate_s_per_lap` —
+  explicitly documented as a display aid anchored to the resolved slope, not a re-fit of
+  `f1models.degradation_math`'s real model (the frontend never sees the raw fit inputs).
+  `degradation-chart.component.ts`: an SVG scatter (clean laps solid, dirty laps dim) plus the fit
+  line, for the followed driver, badging `deg_rate_kind` ("estimated"/"prior").
+- `web/src/app/timing-tower/sort-cars.ts`: `sortCarsByPredictedFinish`/`predictedPositionsByDriver`
+  — the predicted running order has to be computed here, not in `f1engine`, since
+  `DeterministicRacePredictor.compute()` only ever sees one driver's `scope_id` per call (see
+  `f1engine/predictors.py`'s module docstring) and can't rank across all 22 cars itself. Two new
+  timing-tower columns: "Pred. pos" (ranked, colour-coded gain/loss vs. current position) and "Pred.
+  finish" (formatted time plus the same estimated/prior badge as the degradation chart).
+- **Done:** written and statically checked the same way as T9's frontend work (import/export
+  resolution + brace-balance scripts across all 25 `src/app/**/*.ts` files, all clean) — still no
+  Node in this environment, so nothing here has actually been compiled or run; treat as unverified
+  until `npm install && ng test && ng serve` can. Pure-logic specs
+  (`degradation-history.spec.ts`, extended `sort-cars.spec.ts`) are written to the same standard as
+  `interpolation.spec.ts`/`geometry.spec.ts` and would run under `ng test` once Node is available.
+  Backend side (the `last_lap_is_clean_air` plumbing) *does* run for real here: `test_builder.py`,
+  `test_live_router.py` gained passing assertions for it, full suite still 132 passed / 8 skipped /
+  5 known hand-traced failures / 11 known collection errors (all pre-existing `f1core` Python-version
+  gaps, no new regressions).
 
-### T8 — validation
-- Backtest the degradation/pace estimates against the real Monza and Madring fixtures (already
-  ingested in M1): report fitted deg rates and predicted-vs-actual lap time error, honestly,
-  including where the model is clearly wrong (e.g. Madring's cold start has no compound prior at
-  all yet).
+### T8 — validation — done
+- `tests/replay/test_backtest_m2.py` (new, runs for real on this dev machine — pure NumPy, no
+  `f1core`): walk-forward backtest against the real Monza fixture (`tests/fixtures/openf1/
+  monza_2025_driver1_stint1_laps.json`, driver 1's 37-lap opening stint) — each lap's prediction
+  only ever uses laps seen before it, exactly like the live pipeline would. Reimplements
+  `TyreDegEstimator`/`PaceEstimator`/`LapTimePredictor`'s exact algorithms in pure form (`_fit_deg_rate`/
+  `_fit_pace`), since driving the real Components still needs Python ≥ 3.11; flagged in the module
+  docstring as something that needs updating by hand if `tyre.py`/`pace.py` ever change, with no way
+  to enforce that mechanically here.
+- **Real, honestly-reported results:**
+  - One-lap-ahead prediction error: **prior phase** (laps 3-6, before 5 clean laps accumulate) MAE
+    ≈ 0.91 s; **estimated phase** (laps 7-36) MAE ≈ 0.14 s. The gap is the whole point of the
+    kind/uncertainty system, and it held up on real data.
+  - **Where the model is clearly wrong** (as asked for): the walk-forward degradation-rate fit sits
+    at exactly `0.0` (clamped) from lap 7 through lap 25 — the true Monza signal (T2's full-stint
+    fit: ≈ +0.028 s/lap) is too weak relative to lap-to-lap noise to detect from a short early-stint
+    sample; it only starts climbing once ~19 laps of history exist. A finish-time prediction made
+    from lap 20's data (predicting the cumulative time through lap 36) consequently comes out
+    **3.2% low** (2898.9 s predicted vs. 2994.6 s actual) — the model was still assuming
+    near-zero wear at exactly the point a user mid-race would most want a finish-time estimate.
+    Recorded as a known M2 v1 limitation, not hidden; a mined/circuit-level prior for `k1` (already
+    on the Decisions table as future work, research.md §3.2) would fix this by giving the fit a
+    running start instead of assuming zero.
+  - **Madring (cold start):** genuinely no real lap data exists (it hasn't raced) — see
+    `config/circuits/madring.yaml`'s already-null priors. Backtesting prediction *accuracy* there is
+    impossible by definition; what the two `test_cold_start_*` tests validate instead is that the
+    system doesn't pretend otherwise — the config has every degradation-relevant field left `null`,
+    and the fallback path with zero laps of history resolves to exactly the documented generic
+    prior, never an attempted fit on nothing.
+- Also promoted `tyre.py`'s/`pace.py`'s fallback/threshold constants (`GENERIC_PRIOR_K1_S_PER_LAP`,
+  `MIN_CLEAN_LAPS_FOR_ESTIMATE` ×2, uncertainty levels) into `degradation_math.py`/`pace_math.py` —
+  they're needed by this backtest too, and duplicating magic numbers between the pure module and
+  its Component wrapper (or worse, hand-copying them into the test) would violate CLAUDE.md rule 1.
+  `tyre.py`/`pace.py` now import them from there; no behaviour change.
+- Full suite: 139 passed, 8 skipped (no local DB/Redis), 5 known hand-traced failures + 13 known
+  collection errors (all pre-existing `f1core` Python-version gaps — 2 new ones from `tests/
+  property/`, swept for the first time this session, same cause), no new regressions.
 
-### T9 — docs and backlog
-- Update `README.md`'s status table with the M2 layer. Add anything deferred to `docs/backlog.md`
-  (Kalman filter pace model, per-circuit fuel-effect calibration, driver-skill priors from
-  `docs/f1-driver-ratings.md`, etc.).
+### T9 — docs and backlog — done
+- `README.md`: milestone banner now reads M1 + M2 code-complete; status table gains rows for the
+  new `f1models`/`f1engine` packages and updates `f1core`/`f1state`/`f1api` for what M2 added to
+  each; a new "M2's honest validation" paragraph surfaces T8's real backtest numbers (including the
+  3.2% mid-stint underestimate) at the top level, not just buried in the plan doc; repository layout
+  section updated (`f1models`/`f1engine` are no longer placeholders; `f1calib` still is).
+- `docs/backlog.md`: new "Deferred during Phase 2" section — Kalman filter refitting, estimating a
+  real degradation cliff slope (with the T8 backtest finding as the concrete motivation), per-circuit
+  fuel-effect calibration, driver-skill priors from `docs/f1-driver-ratings.md`, real uncertainty
+  propagation (currently a simple additive upper bound), the frontend's client-side-only lap history
+  (no backend endpoint for full race history), and `api-types.ts` drifting further from
+  `f1api/schemas.py`. Collected from every `docs/backlog.md` cross-reference actually left in M2's
+  code/docstrings (grepped for, not reconstructed from memory), not invented fresh.
+- M2 ("Predict pace") is now fully done: T1–T9 all complete. Next milestone is M3 (pit-stop
+  prediction) per `docs/f1-strategy-foundation.md` §9 — not started, per CLAUDE.md rule 12.
 
 ## Out of scope for Phase 2
 Pit-stop prediction (M3), Monte Carlo / position odds / strategy (M4), SC/VSC/DNF/weather event

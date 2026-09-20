@@ -300,6 +300,21 @@ def test_apply_predictions_mirrors_lap_time_and_finish_time() -> None:
     assert car.prediction_kind == "predicted"
 
 
+def test_apply_predictions_mirrors_is_clean_air_from_the_observation() -> None:
+    builder = RaceStateBuilder()
+    resolved = {"car.lap.observation": _FakeValue({"is_clean_air": True}, "observed")}
+
+    state = builder.apply_predictions(_state(), driver=1, resolved=resolved)
+
+    assert state.car(1).last_lap_is_clean_air is True
+
+    dirty_observation = _FakeValue({"is_clean_air": False}, "observed")
+    dirty_state = builder.apply_predictions(
+        state, driver=1, resolved={"car.lap.observation": dirty_observation}
+    )
+    assert dirty_state.car(1).last_lap_is_clean_air is False
+
+
 def test_apply_predictions_with_an_empty_dict_keeps_existing_values() -> None:
     builder = RaceStateBuilder()
     state = builder.apply_predictions(
