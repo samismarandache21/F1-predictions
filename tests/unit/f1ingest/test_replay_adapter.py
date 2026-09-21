@@ -176,3 +176,19 @@ def test_replay_adapter_stream_publishes_all_events_via_the_clock() -> None:
     assert publisher.events == published
     assert adapter.clock is not None
     assert adapter.clock.position == len(published)
+
+
+def test_zero_zero_location_fixes_are_not_replayed() -> None:
+    """OpenF1 reports (0, 0) before a car has a GPS lock - thousands of rows in
+    the real Monza data's pre-race stretch. They aren't positions; replaying
+    them put dots at the origin (found on the first end-to-end run)."""
+    tables = _sample_tables()
+    tables["location"] = [
+        {"driver_number": 1, "ts": _ts(1.0), "x_m": 0.0, "y_m": 0.0, "z_m": 0.0},
+        {"driver_number": 1, "ts": _ts(2.0), "x_m": 120.5, "y_m": -30.2, "z_m": 1.0},
+    ]
+
+    events = build_event_sequence(9912, _FakeRowSource(tables))
+
+    locations = [e for e in events if e.type == "location_update"]
+    assert [(e.x_m, e.y_m) for e in locations] == [(120.5, -30.2)]

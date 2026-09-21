@@ -18,15 +18,16 @@ import os
 import threading
 import uuid
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
+from f1ingest.db.schema import laps as laps_table
 from f1ingest.db.schema import sessions as sessions_table
 from f1ingest.publisher import InMemoryPublisher
 from f1state.builder import LapCompletedTrigger, RaceStateBuilder
 from f1state.state import RaceState
-from sqlalchemy import Engine, select
+from sqlalchemy import Engine, func, select
 
 # f1ingest.adapters.replay, f1core.config.season, and (M2, T5)
 # f1state.predictions are imported lazily, inside
@@ -44,6 +45,11 @@ from sqlalchemy import Engine, select
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 
 logger = logging.getLogger(__name__)
+
+# The stored data starts ~55 minutes before lap 1 (cars parked in the garage), so a replay
+# begins this long before the first lap instead - at 1x the default would otherwise be an
+# hour of an empty map. The user can still seek; this is only where playback starts.
+_LEAD_IN_BEFORE_LAP_1 = timedelta(seconds=120)
 
 
 def _config_dir() -> Path:
@@ -145,6 +151,9 @@ class LiveReplayManager:
         publisher = InMemoryPublisher()
         adapter = ReplayAdapter(rows, publisher, speed=speed)
         clock = adapter.prepare(session_key)  # blocks briefly: fetches + sorts all events
+        race_start = self._first_lap_start(session_key)
+        if race_start is not None:
+            clock.seek(race_start - _LEAD_IN_BEFORE_LAP_1)
 
         team_by_driver_number, team_colour_by_driver_number = self._team_lookup(
             row["season"], row["round"]
@@ -200,6 +209,12 @@ class LiveReplayManager:
             session.clock.speed = speed
         else:
             raise ValueError(f"unknown action {action!r}")
+
+    def _first_lap_start(self, session_key: int) -> Optional[datetime]:
+        with self._engine.connect() as conn:
+            return conn.execute(
+                select(func.min(laps_table.c.ts)).where(laps_table.c.session_key == session_key)
+            ).scalar_one_or_none()
 
     def _session_row(self, session_key: int) -> Optional[dict[str, Any]]:
         with self._engine.connect() as conn:

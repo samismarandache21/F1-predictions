@@ -162,6 +162,11 @@ def build_event_sequence(session_key: int, rows: RowSource) -> list[DomainEvent]
         )
 
     for loc in location:
+        # OpenF1 reports (0, 0) before a car has a GPS lock - thousands of rows in the
+        # pre-race stretch of the real Monza data. Not a position, and it would put a
+        # dot at the origin, so it is not replayed.
+        if loc["x_m"] == 0.0 and loc["y_m"] == 0.0:
+            continue
         events.append(
             LocationUpdateEvent(
                 ts=loc["ts"],
