@@ -129,6 +129,9 @@ def _apply_grid_positions(result: AdapterResult, grid_by_driver: dict[int, int |
             row["grid_position"] = grid_by_driver[row["driver_number"]]
 
 
+_MAX_STATEMENT_PARAMS = 60_000  # headroom under Postgres' hard limit of 65,535
+
+
 def upsert_rows(conn: Connection, table: Table, rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
@@ -138,12 +141,19 @@ def upsert_rows(conn: Connection, table: Table, rows: list[dict[str, Any]]) -> N
         for col in table.columns
         if col.name not in pk_columns and col.name != "ingested_at"
     ]
-    stmt = pg_insert(table).values(rows)
-    stmt = stmt.on_conflict_do_update(
-        index_elements=list(pk_columns),
-        set_={name: getattr(stmt.excluded, name) for name in update_columns},
-    )
-    conn.execute(stmt)
+    # Postgres caps a single statement at 65,535 bound parameters. A full
+    # race's location table (~150k rows x 7 columns) blows past that in one
+    # multi-row INSERT (found on the first live Monza ingest; fixtures were
+    # tiny), so insert in chunks. Each chunk is still an idempotent upsert.
+    params_per_row = max(len(row) for row in rows)
+    chunk_size = max(1, _MAX_STATEMENT_PARAMS // params_per_row)
+    for start in range(0, len(rows), chunk_size):
+        stmt = pg_insert(table).values(rows[start : start + chunk_size])
+        stmt = stmt.on_conflict_do_update(
+            index_elements=list(pk_columns),
+            set_={name: getattr(stmt.excluded, name) for name in update_columns},
+        )
+        conn.execute(stmt)
 
 
 def ingest_session(

@@ -38,6 +38,23 @@ def _parse_ts(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
+def _parse_gap_s(value: Any) -> float | None:
+    """OpenF1's /intervals returns seconds as numbers, but lapped cars get
+    strings like "+1 LAP" / "+2 LAPS" (found on the first live Monza ingest;
+    the recorded fixtures only had numeric gaps). A lap-down gap has no
+    meaningful seconds value, so it degrades to None rather than crashing
+    the whole session's insert (CLAUDE.md rule 7).
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    try:
+        return float(str(value).strip())
+    except ValueError:
+        return None
+
+
 def _downsample_by_time(samples: Iterable[dict[str, Any]], bucket_s: float) -> list[dict[str, Any]]:
     """Keep the first sample per `bucket_s`-second bucket. Phase 1 decision
     (docs/plan/phase-1.md): downsample to 1 Hz for the bulk store; fixtures
@@ -237,7 +254,10 @@ class OpenF1HistoricalAdapter:
         ] = {}
         for iv in self.fetch_intervals(session_key):
             interval_samples_by_driver.setdefault(iv["driver_number"], []).append(
-                (_parse_ts(iv["date"]), (iv.get("gap_to_leader"), iv.get("interval")))
+                (
+                    _parse_ts(iv["date"]),
+                    (_parse_gap_s(iv.get("gap_to_leader")), _parse_gap_s(iv.get("interval"))),
+                )
             )
         for driver_number, samples in interval_samples_by_driver.items():
             interval_by_driver[driver_number] = AsOfSeries(samples)

@@ -78,6 +78,7 @@ import { predictedPositionsByDriver, sortCarsByPosition } from './sort-cars';
       td {
         padding: 0.35rem 0.6rem;
         border-bottom: 1px solid var(--f1-border);
+        white-space: nowrap;
       }
       .row {
         cursor: pointer;

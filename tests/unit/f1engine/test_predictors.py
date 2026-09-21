@@ -119,7 +119,7 @@ def test_lap_time_predictor_falls_back_to_the_generic_deg_rate_prior(tmp_path: P
     expected = predict_lap_time_s(
         pace_base_s=90.0,
         deg_rate_s_per_lap=GENERIC_PRIOR_K1_S_PER_LAP,
-        tyre_age_laps=2,
+        tyre_age_laps=1,  # last observed lap had age 0, so the next lap is age 1
         lap_number=2,
     )
     assert result["car.lap.time_pred"].data == pytest.approx(expected)

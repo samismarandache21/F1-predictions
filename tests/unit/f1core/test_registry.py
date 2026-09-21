@@ -66,3 +66,10 @@ def test_duplicate_id_fails(tmp_path: Path) -> None:
     (tmp_path / "two.yaml").write_text(_MINIMAL_VAR)
     with pytest.raises(DuplicateVariableError):
         VariableRegistry.load(tmp_path)
+
+
+def test_missing_config_directory_fails_fast(tmp_path: Path) -> None:
+    """A mis-mounted config dir must not silently produce an empty registry
+    (found on the first Docker run, where config/ wasn't mounted)."""
+    with pytest.raises(FileNotFoundError):
+        VariableRegistry.load(tmp_path / "does-not-exist")

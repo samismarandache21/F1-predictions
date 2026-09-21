@@ -5,12 +5,16 @@ description = "Race state builder: consumes normalised domain events and maintai
 requires-python = ">=3.12"
 dependencies = [
     "f1core",
+    "f1models",
+    "f1engine",
     "redis>=5.0",
     "pydantic>=2.9",
 ]
 
 [tool.uv.sources]
 f1core = { workspace = true }
+f1models = { workspace = true }
+f1engine = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

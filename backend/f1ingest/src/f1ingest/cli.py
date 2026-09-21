@@ -18,6 +18,7 @@ from f1ingest.adapters.replay import DbRowSource, ReplayAdapter
 from f1ingest.cache import RawResponseCache
 from f1ingest.clock import MAX_SPEED, MIN_SPEED
 from f1ingest.db.engine import get_engine
+from f1ingest.geometry_build import build_and_store_geometry
 from f1ingest.http import RateLimitedClient, RateLimiter
 from f1ingest.pipeline import ingest_session
 from f1ingest.publisher import RedisStreamPublisher
@@ -83,6 +84,24 @@ def ingest(season: int, round_no: int) -> None:
         summary.rows_ingested,
         summary.rows_quarantined,
     )
+    # Ingestion itself succeeded; a geometry failure must not undo that
+    # (CLAUDE.md rule 7). `make build-geometry` can retry it on its own.
+    try:
+        geometry = build_and_store_geometry(engine, summary.session_key)
+    except Exception:
+        logger.exception("circuit geometry build failed for session %s", summary.session_key)
+    else:
+        logger.info(
+            "built geometry circuit=%s length_m=%.0f", geometry.circuit_id, geometry.length_m
+        )
+
+
+@cli.command("build-geometry")
+@click.option("--session", "session_key", required=True, type=int)
+def build_geometry_cmd(session_key: int) -> None:
+    """Build and store a circuit's geometry from an ingested session."""
+    geometry = build_and_store_geometry(get_engine(), session_key)
+    logger.info("built geometry circuit=%s length_m=%.0f", geometry.circuit_id, geometry.length_m)
 
 
 @cli.command("ingest-season")

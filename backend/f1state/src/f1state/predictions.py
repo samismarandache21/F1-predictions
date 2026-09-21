@@ -41,10 +41,19 @@ def _is_clean_air(event: DomainEvent) -> bool:
     """CLAUDE.md's glossary, read straight off the event: interval to the
     car ahead > 2s, not an in/out lap (f1ingest already derives
     is_pit_out_lap/is_pit_in_lap per-lap), green flag."""
+    # The race leader has no car ahead, so they are in clear air by definition. OpenF1 reports
+    # the leader's interval as 0.0 (checked against the real Monza data - not null), which the
+    # plain "> 2s" test would misread as traffic, so the leader never got a prediction on the
+    # first real replay. Everyone else needs a real gap of more than 2 s.
+    clear_of_car_ahead = event.position == 1 or (
+        event.interval_s is not None and event.interval_s > 2.0
+    )
+    # Lap 1 is a standing start (~4 s slower than a racing lap at Monza): never representative
+    # of tyre or car pace, and without this the leader's lap 1 counted as clean air.
     return (
-        event.track_status == "GREEN"
-        and event.interval_s is not None
-        and event.interval_s > 2.0
+        event.lap > 1
+        and event.track_status == "GREEN"
+        and clear_of_car_ahead
         and not event.is_pit_out_lap
         and not event.is_pit_in_lap
     )

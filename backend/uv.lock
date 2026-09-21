@@ -680,6 +680,8 @@ version = "0.1.0"
 source = { editable = "f1state" }
 dependencies = [
     { name = "f1core" },
+    { name = "f1engine" },
+    { name = "f1models" },
     { name = "pydantic" },
     { name = "redis" },
 ]
@@ -687,6 +689,8 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "f1core", editable = "f1core" },
+    { name = "f1engine", editable = "f1engine" },
+    { name = "f1models", editable = "f1models" },
     { name = "pydantic", specifier = ">=2.9" },
     { name = "redis", specifier = ">=5.0" },
 ]

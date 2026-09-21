@@ -26,6 +26,7 @@ class _FakeLap:
     ts: datetime
     lap_time_s: float | None
     interval_s: float | None
+    position: int | None = None
     compound: str | None = "MEDIUM"
     tyre_age_laps: int | None = 1
     track_status: str | None = "GREEN"
@@ -51,7 +52,14 @@ def test_is_clean_air_requires_green_flag_and_a_gap_over_two_seconds() -> None:
     assert not _is_clean_air(_lap(5, interval_s=5.0, track_status="SC"))
     assert not _is_clean_air(_lap(5, interval_s=5.0, is_pit_out_lap=True))
     assert not _is_clean_air(_lap(5, interval_s=5.0, is_pit_in_lap=True))
-    assert not _is_clean_air(_lap(5, interval_s=None))
+    assert not _is_clean_air(_lap(5, interval_s=None, position=5))  # unknown gap, not the leader
+    # The leader has no car ahead. OpenF1 reports their interval as 0.0 (not null), which
+    # must not be read as traffic.
+    assert _is_clean_air(_lap(5, interval_s=0.0, position=1))
+    assert _is_clean_air(_lap(5, interval_s=None, position=1))
+    assert not _is_clean_air(_lap(5, interval_s=0.7, position=2))  # P2 right behind the leader
+    assert not _is_clean_air(_lap(1, interval_s=0.0, position=1))  # standing start
+    assert _is_clean_air(_lap(2, interval_s=0.0, position=1))
 
 
 def test_on_lap_completed_returns_no_values_when_lap_time_is_missing() -> None:
@@ -67,7 +75,7 @@ def test_on_lap_completed_falls_back_to_priors_below_the_clean_lap_threshold() -
     pipeline = PredictionPipeline(_CONFIG_DIR)
     car = CarState(driver=1)
 
-    result = pipeline.on_lap_completed(car, _lap(1))
+    result = pipeline.on_lap_completed(car, _lap(2))  # lap 1 (standing start) never counts
 
     assert result["car.tyre.deg_rate"].kind.value == "prior"
     assert result["car.tyre.deg_cliff_lap"].kind.value == "prior"

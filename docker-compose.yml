@@ -36,11 +36,17 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-f1strategy}:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-f1strategy}
       REDIS_URL: redis://redis:6379/0
+      F1_CONFIG_DIR: /app/config
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
       - ./backend:/app
+      - ./config:/app/config:ro
       - ./data:/app/data
+      # Keep the image's Linux venv: without this the bind mount above exposes the
+      # host's backend/.venv (a Mac one) at /app/.venv, and host `uv` runs and this
+      # container clobber each other's environment.
+      - /app/.venv
     depends_on:
       db:
         condition: service_healthy
@@ -60,6 +66,10 @@ services:
     volumes:
       - ./backend:/app
       - ./data:/app/data
+      # Keep the image's Linux venv: without this the bind mount above exposes the
+      # host's backend/.venv (a Mac one) at /app/.venv, and host `uv` runs and this
+      # container clobber each other's environment.
+      - /app/.venv
     depends_on:
       db:
         condition: service_healthy

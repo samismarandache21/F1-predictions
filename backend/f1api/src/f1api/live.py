@@ -13,6 +13,8 @@ carefully and follows the same patterns already validated elsewhere.
 
 from __future__ import annotations
 
+import logging
+import os
 import threading
 import uuid
 from collections.abc import Iterable
@@ -40,6 +42,14 @@ from sqlalchemy import Engine, select
 # backend/f1api/src/f1api/live.py -> repo root is 4 parents up (see
 # f1ingest.cli's identical pattern).
 _REPO_ROOT = Path(__file__).resolve().parents[4]
+
+logger = logging.getLogger(__name__)
+
+
+def _config_dir() -> Path:
+    """F1_CONFIG_DIR wins: inside the api container, `_REPO_ROOT` resolves to `/` (the
+    package lives at /app/f1api/src/...), not the repo, so the default would point nowhere."""
+    return Path(os.environ.get("F1_CONFIG_DIR", str(_REPO_ROOT / "config")))
 
 
 class ReplaySession:
@@ -101,9 +111,18 @@ class ReplaySession:
                     if not isinstance(trigger, LapCompletedTrigger):
                         continue
                     car = self._state.car(trigger.driver)
-                    resolved = self._predictions.on_lap_completed(
-                        car, event, total_laps=self._state.total_laps
-                    )
+                    try:
+                        resolved = self._predictions.on_lap_completed(
+                            car, event, total_laps=self._state.total_laps
+                        )
+                    except Exception:
+                        # This runs on a daemon thread: an uncaught error here would
+                        # silently end the whole replay. Predictions are additive
+                        # (CLAUDE.md rule 7) - log and keep the timing data flowing.
+                        logger.exception(
+                            "prediction failed for driver %s lap %s", trigger.driver, trigger.lap
+                        )
+                        continue
                     self._state = self._builder.apply_predictions(
                         self._state, trigger.driver, resolved
                     )
@@ -140,7 +159,7 @@ class LiveReplayManager:
             total_laps=row["total_laps"],
         )
 
-        predictions = PredictionPipeline(_REPO_ROOT / "config")
+        predictions = PredictionPipeline(_config_dir())
 
         live_id = uuid.uuid4().hex
         session = ReplaySession(session_key, clock, builder, initial_state, predictions)
@@ -202,7 +221,7 @@ class LiveReplayManager:
         endpoint or a client-side copy of the season config."""
         if round_no is None:
             return {}, {}
-        config_path = _REPO_ROOT / "config" / "seasons" / f"{season}.yaml"
+        config_path = _config_dir() / "seasons" / f"{season}.yaml"
         if not config_path.exists():
             return {}, {}
         from f1core.config.season import load_season

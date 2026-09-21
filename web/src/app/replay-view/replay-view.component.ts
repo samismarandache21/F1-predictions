@@ -57,7 +57,7 @@ import { TrackMapComponent } from '../track-map/track-map.component';
       .layout {
         flex: 1;
         display: grid;
-        grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
         gap: 0.5rem;
         padding: 0.5rem;
         overflow: hidden;
@@ -69,7 +69,8 @@ import { TrackMapComponent } from '../track-map/track-map.component';
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        overflow-y: auto;
+        min-width: 0;
+        overflow: auto;
       }
 
       /* Responsive: stack vertically on narrow screens (T9). */

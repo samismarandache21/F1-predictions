@@ -57,6 +57,11 @@ class VariableRegistry:
 
     @classmethod
     def load(cls, directory: Path) -> VariableRegistry:
+        if not directory.is_dir():
+            # An empty registry would let a mis-mounted/mis-located config dir look like a
+            # working pipeline that just never computes anything (found on the first
+            # Docker run, where config/ wasn't mounted). Fail fast instead.
+            raise FileNotFoundError(f"variable config directory not found: {directory}")
         definitions: dict[str, VariableDef] = {}
         for path in sorted(directory.glob("*.yaml")):
             for item in _load_yaml_list(path):
