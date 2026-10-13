@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from f1core.events import DomainEvent
     from f1core.snapshot import Explanation
     from f1core.values import Value
+
     from f1state.state import CarState
 
 # Resolved var_ids (besides car.lap.observation itself, handled separately

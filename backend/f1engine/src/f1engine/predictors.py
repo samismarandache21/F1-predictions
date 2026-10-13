@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from f1core.snapshot import Snapshot
 from f1core.values import Kind, Value
-from f1engine.prediction_math import predict_finish_time_s, predict_lap_time_s
 from f1models.tyre import GENERIC_PRIOR_K1_S_PER_LAP
+
+from f1engine.prediction_math import predict_finish_time_s, predict_lap_time_s
 
 # Additive combination of the input values' own uncertainties: a simple
 # upper bound, not a real error-propagation model. Calibrating this

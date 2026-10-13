@@ -16,9 +16,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-
 from f1core.snapshot import Snapshot
 from f1core.values import Kind, Value
+
 from f1models.degradation_math import (
     ESTIMATED_UNCERTAINTY,
     FUEL_EFFECT_S_PER_LAP,

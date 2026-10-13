@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from f1core.snapshot import Snapshot
 from f1core.values import Kind, Value
+
 from f1models.degradation_math import fuel_corrected_lap_time
 from f1models.pace_math import (
     DEFAULT_EWMA_ALPHA,
